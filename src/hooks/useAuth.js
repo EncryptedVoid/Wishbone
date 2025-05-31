@@ -4,8 +4,8 @@ import { supabase } from '../lib/supabase'
 import { RealtimePresence } from '@supabase/supabase-js'
 
 export function useAuth() {
-  const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [ user, setUser ] = useState(null)
+  const [ loading, setLoading ] = useState(true)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export function useAuth() {
         }
 
         if (event === 'SIGNED_IN') {
-            navigate('/login', { replace: true })
+            navigate('/dashboard', { replace: true })
         }
       }
     )
