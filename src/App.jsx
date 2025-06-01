@@ -5,41 +5,31 @@ import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
 // import { LoginPage, SignupPage, ResetPasswordPage, HomePage, WishlistPage, SettingsPage } from './pages'
 import { default as AuthPage } from './pages/Auth'
-import { default as PublicHomePage } from './pages/PublicHomePage'
-import { default as PrivateHomePage } from './pages/PrivateHomePage'
+import { default as Home } from './pages/Home'
+import { default as Navbar } from './components/navbar'
+import { default as Dashboard } from './pages/Dashboard'
 
 
 function App() {
   const { user, loading } = useAuth();
 
-  const handleAuthClick = () => {
-    if (user) {
-      // User is logged in, so logout
-      supabase.auth.signOut();
-    } else {
-      // User not logged in, go to auth page
-      window.location.href = '/auth';
-    }
-  };
-
   if (loading) return <div>Loading...</div>;
 
   return (
     <>
-      {/* The login/logout button */}
-      <button onClick={handleAuthClick} style={{padding: '10px 20px', margin: '20px'}}>
-        {user ? 'Logout' : 'Login'}
-      </button>
+      <Navbar />
 
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/dashboard" element={
           <ProtectedRoute>
-            <PrivateHomePage />
+            <Dashboard />
           </ProtectedRoute>
         } />
-        <Route path="/*" element={<PublicHomePage />} />
+        <Route path="/" element={<Home />} />
       </Routes>
+
+      <div>FOOTER</div>
     </>
   );
 }
