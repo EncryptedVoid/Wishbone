@@ -3,11 +3,20 @@ import React from "react"
 function Wishlist() {
     return (
         <>
-            FILTER ITEMS
-            ADD ITEMS
-            SELECT ITEMS
-            DELETE ITEMS
-            EDIT ITEMS
+            <div>
+                FILTER ITEMS
+                ADD ITEMS
+                SELECT ITEMS
+                DELETE ITEMS
+                EDIT ITEMS
+            </div>
+            <div>
+                LIST
+                - WISH CARD
+                - WISH CARD
+                - WISH CARD
+                - WISH CARD
+            </div>
         </>
     )
 }

@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ProtectedRoute from './components/ProtectedRoute';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 import { default as AuthPage } from './pages/Auth'
 import { default as Home } from './pages/Home'
 import { default as Navbar } from './components/navbar'

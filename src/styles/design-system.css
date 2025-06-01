@@ -1,0 +1,51 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    /* Brand Colors */
+    --color-primary-50: 240 249 255;
+    --color-primary-100: 219 234 254;
+    --color-primary-500: 59 130 246;
+    --color-primary-600: 37 99 235;
+    --color-primary-900: 30 58 138;
+
+    /* Semantic Colors */
+    --color-background: 255 255 255;
+    --color-foreground: 15 23 42;
+    --color-surface: 248 250 252;
+    --color-border: 226 232 240;
+    --color-muted: 100 116 139;
+
+    /* Status Colors */
+    --color-success: 34 197 94;
+    --color-warning: 251 191 36;
+    --color-error: 239 68 68;
+  }
+
+  [data-theme="dark"] {
+    --color-background: 15 23 42;
+    --color-foreground: 248 250 252;
+    --color-surface: 30 41 59;
+    --color-border: 51 65 85;
+    --color-muted: 148 163 184;
+  }
+
+  /* Color Theme Variants */
+  [data-color-theme="purple"] {
+    --color-primary-50: 250 245 255;
+    --color-primary-100: 243 232 255;
+    --color-primary-500: 168 85 247;
+    --color-primary-600: 147 51 234;
+    --color-primary-900: 88 28 135;
+  }
+
+  [data-color-theme="green"] {
+    --color-primary-50: 240 253 244;
+    --color-primary-100: 220 252 231;
+    --color-primary-500: 34 197 94;
+    --color-primary-600: 22 163 74;
+    --color-primary-900: 20 83 45;
+  }
+}
