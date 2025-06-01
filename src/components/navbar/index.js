@@ -1,34 +1,87 @@
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 
 function Navbar() {
-      const { user, loading } = useAuth();
+    const { user, loading } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
 
-    const handleAuthClick = () => {
+    const handleAuthClick = async () => {
         if (user) {
-            // User is logged in, so logout
-            supabase.auth.signOut();
-            window.location.href = '/';
+            try {
+                await supabase.auth.signOut();
+                navigate('/', { replace: true });
+            } catch (error) {
+                console.error('Error signing out:', error);
+            }
         } else {
-            // User not logged in, go to auth page
-            window.location.href = '/auth';
+            navigate('/auth');
         }
     };
 
-    return (
-        <>
-            {<div>HOME</div>}
-            {user ? <div>MEMOIRS</div> : <div></div>}
-            {user ? <div>WISHLIST</div> : <div></div>}
-            {user ? <div>EVENTS</div> : <div></div>}
-            {user ? <div>FRIENDS</div> : <div></div>}
-            {user ? <div>SETTINGS</div> : <div></div>}
+    const handleNavClick = (path) => {
+        navigate(path);
+    };
 
-            <button onClick={handleAuthClick} style={{padding: '10px 20px', margin: '20px'}}>
+    // Don't render navigation items while loading
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    return (
+        <nav className="navbar">
+            <button
+                onClick={() => handleNavClick(user ? '/dashboard' : '/')}
+                className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
+            >
+                HOME
+            </button>
+
+            {user && (
+                <>
+                    <Link
+                        to="/memoirs"
+                        className={`nav-item ${location.pathname === '/memoirs' ? 'active' : ''}`}
+                    >
+                        MEMOIRS
+                    </Link>
+                    <Link
+                        to="/wishlist"
+                        className={`nav-item ${location.pathname === '/wishlist' ? 'active' : ''}`}
+                    >
+                        WISHLIST
+                    </Link>
+                    <Link
+                        to="/events"
+                        className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
+                    >
+                        EVENTS
+                    </Link>
+                    <Link
+                        to="/friends"
+                        className={`nav-item ${location.pathname === '/friends' ? 'active' : ''}`}
+                    >
+                        FRIENDS
+                    </Link>
+                    <Link
+                        to="/settings"
+                        className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
+                    >
+                        SETTINGS
+                    </Link>
+                </>
+            )}
+
+            <button
+                onClick={handleAuthClick}
+                className="auth-button"
+                disabled={loading}
+            >
                 {user ? 'Logout' : 'Login'}
             </button>
-        </>
-    )
+        </nav>
+    );
 }
 
 export default Navbar;

@@ -1,11 +1,11 @@
 import React from "react"
 
-function Memoirs() {
+function Friends() {
     return (
         <>
-            PHOTO GALLERY
+            Friends List
         </>
     )
 }
 
-export default Memoirs;
+export default Friends;
