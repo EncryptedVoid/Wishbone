@@ -4,7 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/ProtectedRoute';
 // import { LoginPage, SignupPage, ResetPasswordPage, HomePage, WishlistPage, SettingsPage } from './pages'
-import { default as AuthPage } from './pages/AuthPage'
+import { default as AuthPage } from './pages/Auth'
 import { default as PublicHomePage } from './pages/PublicHomePage'
 import { default as PrivateHomePage } from './pages/PrivateHomePage'
 
