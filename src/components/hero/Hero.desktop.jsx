@@ -105,7 +105,7 @@ const HeroDesktop = () => {
                 variants={itemVariants}
               >
                 Create wishlists from any online store. Share with friends and family.
-                Never get unwanted gifts again.
+                Never get unwanted gifts again!
               </motion.p>
 
               <motion.div
