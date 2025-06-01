@@ -22,8 +22,75 @@
     --color-success: 34 197 94;
     --color-warning: 251 191 36;
     --color-error: 239 68 68;
+
+    /* RESPONSIVE TYPOGRAPHY SCALE */
+    /* Desktop typography (default) */
+    --text-xs: 0.75rem; /* 12px */
+    --text-sm: 0.875rem; /* 14px */
+    --text-base: 1rem; /* 16px */
+    --text-lg: 1.125rem; /* 18px */
+    --text-xl: 1.25rem; /* 20px */
+    --text-2xl: 1.5rem; /* 24px */
+    --text-3xl: 1.875rem; /* 30px */
+    --text-4xl: 2.25rem; /* 36px */
+    --text-5xl: 3rem; /* 48px */
+    --text-6xl: 3.75rem; /* 60px */
+
+    /* RESPONSIVE SPACING SCALE */
+    --space-xs: 0.25rem; /* 4px */
+    --space-sm: 0.5rem; /* 8px */
+    --space-md: 1rem; /* 16px */
+    --space-lg: 1.5rem; /* 24px */
+    --space-xl: 2rem; /* 32px */
+    --space-2xl: 3rem; /* 48px */
+    --space-3xl: 4rem; /* 64px */
+
+    /* COMPONENT SIZING */
+    --size-button-sm: 2rem; /* 32px height */
+    --size-button-md: 2.5rem; /* 40px height */
+    --size-button-lg: 3rem; /* 48px height */
+
+    --size-input-sm: 2rem; /* 32px height */
+    --size-input-md: 2.5rem; /* 40px height */
+    --size-input-lg: 3rem; /* 48px height */
   }
 
+  /* MOBILE RESPONSIVE ADJUSTMENTS */
+  @media (max-width: 768px) {
+    :root {
+      /* Mobile typography - slightly smaller and tighter */
+      --text-xs: 0.625rem; /* 10px */
+      --text-sm: 0.75rem; /* 12px */
+      --text-base: 0.875rem; /* 14px */
+      --text-lg: 1rem; /* 16px */
+      --text-xl: 1.125rem; /* 18px */
+      --text-2xl: 1.25rem; /* 20px */
+      --text-3xl: 1.5rem; /* 24px */
+      --text-4xl: 1.875rem; /* 30px */
+      --text-5xl: 2.25rem; /* 36px */
+      --text-6xl: 2.5rem; /* 40px */
+
+      /* Mobile spacing - tighter for smaller screens */
+      --space-xs: 0.25rem; /* 4px */
+      --space-sm: 0.375rem; /* 6px */
+      --space-md: 0.75rem; /* 12px */
+      --space-lg: 1rem; /* 16px */
+      --space-xl: 1.5rem; /* 24px */
+      --space-2xl: 2rem; /* 32px */
+      --space-3xl: 2.5rem; /* 40px */
+
+      /* Mobile component sizing */
+      --size-button-sm: 2.25rem; /* 36px height - easier to tap */
+      --size-button-md: 2.75rem; /* 44px height */
+      --size-button-lg: 3.25rem; /* 52px height */
+
+      --size-input-sm: 2.25rem; /* 36px height */
+      --size-input-md: 2.75rem; /* 44px height */
+      --size-input-lg: 3.25rem; /* 52px height */
+    }
+  }
+
+  /* DARK THEME */
   [data-theme="dark"] {
     --color-background: 15 23 42;
     --color-foreground: 248 250 252;
@@ -32,7 +99,7 @@
     --color-muted: 148 163 184;
   }
 
-  /* Color Theme Variants */
+  /* COLOR THEME VARIANTS */
   [data-color-theme="purple"] {
     --color-primary-50: 250 245 255;
     --color-primary-100: 243 232 255;
@@ -47,5 +114,91 @@
     --color-primary-500: 34 197 94;
     --color-primary-600: 22 163 74;
     --color-primary-900: 20 83 45;
+  }
+
+  /* BASE STYLING WITH RESPONSIVE VARIABLES */
+  body {
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-foreground));
+    font-size: var(--text-base);
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* SEMANTIC TEXT SIZES - These automatically adapt! */
+  .text-responsive-xs {
+    font-size: var(--text-xs);
+  }
+  .text-responsive-sm {
+    font-size: var(--text-sm);
+  }
+  .text-responsive-base {
+    font-size: var(--text-base);
+  }
+  .text-responsive-lg {
+    font-size: var(--text-lg);
+  }
+  .text-responsive-xl {
+    font-size: var(--text-xl);
+  }
+  .text-responsive-2xl {
+    font-size: var(--text-2xl);
+  }
+  .text-responsive-3xl {
+    font-size: var(--text-3xl);
+  }
+  .text-responsive-4xl {
+    font-size: var(--text-4xl);
+  }
+  .text-responsive-5xl {
+    font-size: var(--text-5xl);
+  }
+  .text-responsive-6xl {
+    font-size: var(--text-6xl);
+  }
+
+  /* SEMANTIC SPACING - Also automatically adapts! */
+  .space-responsive-xs {
+    gap: var(--space-xs);
+  }
+  .space-responsive-sm {
+    gap: var(--space-sm);
+  }
+  .space-responsive-md {
+    gap: var(--space-md);
+  }
+  .space-responsive-lg {
+    gap: var(--space-lg);
+  }
+  .space-responsive-xl {
+    gap: var(--space-xl);
+  }
+  .space-responsive-2xl {
+    gap: var(--space-2xl);
+  }
+  .space-responsive-3xl {
+    gap: var(--space-3xl);
+  }
+
+  .p-responsive-xs {
+    padding: var(--space-xs);
+  }
+  .p-responsive-sm {
+    padding: var(--space-sm);
+  }
+  .p-responsive-md {
+    padding: var(--space-md);
+  }
+  .p-responsive-lg {
+    padding: var(--space-lg);
+  }
+  .p-responsive-xl {
+    padding: var(--space-xl);
+  }
+  .p-responsive-2xl {
+    padding: var(--space-2xl);
+  }
+  .p-responsive-3xl {
+    padding: var(--space-3xl);
   }
 }

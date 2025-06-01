@@ -1,5 +1,5 @@
-import { React, useState, useEffect } from 'react';
-import { supabase } from '../../lib/supabase';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth'
 
 function useProfile() {
@@ -39,3 +39,5 @@ function useProfile() {
 
   return { profile, loading, updateProfile }
 }
+
+export default useProfile;

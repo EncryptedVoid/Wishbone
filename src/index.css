@@ -1,3 +1,4 @@
+@import "./styles/design-system.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -15,6 +16,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: rgb(var(--color-background));
+  color: rgb(var(--color-foreground));
 }
 
 code {

@@ -1,87 +1,22 @@
-import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
-import { supabase } from '../../lib/supabase';
+import React from 'react';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import NavbarDesktop from './Navbar.desktop';
+import NavbarMobile from './Navbar.mobile';
 
 function Navbar() {
-    const { user, loading } = useAuth();
-    const navigate = useNavigate();
-    const location = useLocation();
+  const { isMobile, isLoading } = useIsMobile();
 
-    const handleAuthClick = async () => {
-        if (user) {
-            try {
-                await supabase.auth.signOut();
-                navigate('/', { replace: true });
-            } catch (error) {
-                console.error('Error signing out:', error);
-            }
-        } else {
-            navigate('/auth');
-        }
-    };
-
-    const handleNavClick = (path) => {
-        navigate(path);
-    };
-
-    // Don't render navigation items while loading
-    if (loading) {
-        return <div>Loading...</div>;
-    }
-
+  if (isLoading) {
     return (
-        <nav className="navbar">
-            <button
-                onClick={() => handleNavClick(user ? '/dashboard' : '/')}
-                className={`nav-item ${location.pathname === '/' ? 'active' : ''}`}
-            >
-                HOME
-            </button>
-
-            {user && (
-                <>
-                    <Link
-                        to="/memoirs"
-                        className={`nav-item ${location.pathname === '/memoirs' ? 'active' : ''}`}
-                    >
-                        MEMOIRS
-                    </Link>
-                    <Link
-                        to="/wishlist"
-                        className={`nav-item ${location.pathname === '/wishlist' ? 'active' : ''}`}
-                    >
-                        WISHLIST
-                    </Link>
-                    <Link
-                        to="/events"
-                        className={`nav-item ${location.pathname === '/events' ? 'active' : ''}`}
-                    >
-                        EVENTS
-                    </Link>
-                    <Link
-                        to="/friends"
-                        className={`nav-item ${location.pathname === '/friends' ? 'active' : ''}`}
-                    >
-                        FRIENDS
-                    </Link>
-                    <Link
-                        to="/settings"
-                        className={`nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
-                    >
-                        SETTINGS
-                    </Link>
-                </>
-            )}
-
-            <button
-                onClick={handleAuthClick}
-                className="auth-button"
-                disabled={loading}
-            >
-                {user ? 'Logout' : 'Login'}
-            </button>
-        </nav>
+      <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+        </div>
+      </div>
     );
+  }
+
+  return isMobile ? <NavbarMobile /> : <NavbarDesktop />;
 }
 
 export default Navbar;
