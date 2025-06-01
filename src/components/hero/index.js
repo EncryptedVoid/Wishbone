@@ -1,8 +1,8 @@
-import AuthPageMobile from './Auth.mobile'
-import AuthPageDesktop from './Auth.desktop'
+import HeroMobile from './Hero.mobile'
+import HeroDesktop from './Hero.desktop'
 import { useIsMobile } from '../../hooks/useIsMobile'
 
-function AuthPage() {
+function Hero() {
   const { isMobile, isLoading } = useIsMobile();
 
   if (isLoading) {
@@ -13,7 +13,7 @@ function AuthPage() {
     );
   }
 
-  return isMobile ? <AuthPageMobile /> : <AuthPageDesktop />;
+  return isMobile ? <HeroMobile /> : <HeroDesktop />;
 }
 
-export default AuthPage;
+export default Hero;

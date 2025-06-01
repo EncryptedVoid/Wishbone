@@ -1,9 +1,9 @@
-import React from "react"
+import { default as Hero } from '../../components/hero'
 
 function Home() {
     return (
         <>
-            <div>HERO</div>
+            <Hero />
             <div>FEATURE LIST</div>
             <div>PRICING</div>
             <div>CTA</div>
