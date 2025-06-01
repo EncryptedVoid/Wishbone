@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    /* Brand Colors */
+    /* Default Brand Colors (Blue) */
     --color-primary-50: 240 249 255;
     --color-primary-100: 219 234 254;
     --color-primary-500: 59 130 246;
@@ -24,69 +24,63 @@
     --color-error: 239 68 68;
 
     /* RESPONSIVE TYPOGRAPHY SCALE */
-    /* Desktop typography (default) */
-    --text-xs: 0.75rem; /* 12px */
-    --text-sm: 0.875rem; /* 14px */
-    --text-base: 1rem; /* 16px */
-    --text-lg: 1.125rem; /* 18px */
-    --text-xl: 1.25rem; /* 20px */
-    --text-2xl: 1.5rem; /* 24px */
-    --text-3xl: 1.875rem; /* 30px */
-    --text-4xl: 2.25rem; /* 36px */
-    --text-5xl: 3rem; /* 48px */
-    --text-6xl: 3.75rem; /* 60px */
+    --text-xs: 0.75rem;
+    --text-sm: 0.875rem;
+    --text-base: 1rem;
+    --text-lg: 1.125rem;
+    --text-xl: 1.25rem;
+    --text-2xl: 1.5rem;
+    --text-3xl: 1.875rem;
+    --text-4xl: 2.25rem;
+    --text-5xl: 3rem;
+    --text-6xl: 3.75rem;
 
     /* RESPONSIVE SPACING SCALE */
-    --space-xs: 0.25rem; /* 4px */
-    --space-sm: 0.5rem; /* 8px */
-    --space-md: 1rem; /* 16px */
-    --space-lg: 1.5rem; /* 24px */
-    --space-xl: 2rem; /* 32px */
-    --space-2xl: 3rem; /* 48px */
-    --space-3xl: 4rem; /* 64px */
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
 
     /* COMPONENT SIZING */
-    --size-button-sm: 2rem; /* 32px height */
-    --size-button-md: 2.5rem; /* 40px height */
-    --size-button-lg: 3rem; /* 48px height */
-
-    --size-input-sm: 2rem; /* 32px height */
-    --size-input-md: 2.5rem; /* 40px height */
-    --size-input-lg: 3rem; /* 48px height */
+    --size-button-sm: 2rem;
+    --size-button-md: 2.5rem;
+    --size-button-lg: 3rem;
+    --size-input-sm: 2rem;
+    --size-input-md: 2.5rem;
+    --size-input-lg: 3rem;
   }
 
   /* MOBILE RESPONSIVE ADJUSTMENTS */
   @media (max-width: 768px) {
     :root {
-      /* Mobile typography - slightly smaller and tighter */
-      --text-xs: 0.625rem; /* 10px */
-      --text-sm: 0.75rem; /* 12px */
-      --text-base: 0.875rem; /* 14px */
-      --text-lg: 1rem; /* 16px */
-      --text-xl: 1.125rem; /* 18px */
-      --text-2xl: 1.25rem; /* 20px */
-      --text-3xl: 1.5rem; /* 24px */
-      --text-4xl: 1.875rem; /* 30px */
-      --text-5xl: 2.25rem; /* 36px */
-      --text-6xl: 2.5rem; /* 40px */
+      --text-xs: 0.625rem;
+      --text-sm: 0.75rem;
+      --text-base: 0.875rem;
+      --text-lg: 1rem;
+      --text-xl: 1.125rem;
+      --text-2xl: 1.25rem;
+      --text-3xl: 1.5rem;
+      --text-4xl: 1.875rem;
+      --text-5xl: 2.25rem;
+      --text-6xl: 2.5rem;
 
-      /* Mobile spacing - tighter for smaller screens */
-      --space-xs: 0.25rem; /* 4px */
-      --space-sm: 0.375rem; /* 6px */
-      --space-md: 0.75rem; /* 12px */
-      --space-lg: 1rem; /* 16px */
-      --space-xl: 1.5rem; /* 24px */
-      --space-2xl: 2rem; /* 32px */
-      --space-3xl: 2.5rem; /* 40px */
+      --space-xs: 0.25rem;
+      --space-sm: 0.375rem;
+      --space-md: 0.75rem;
+      --space-lg: 1rem;
+      --space-xl: 1.5rem;
+      --space-2xl: 2rem;
+      --space-3xl: 2.5rem;
 
-      /* Mobile component sizing */
-      --size-button-sm: 2.25rem; /* 36px height - easier to tap */
-      --size-button-md: 2.75rem; /* 44px height */
-      --size-button-lg: 3.25rem; /* 52px height */
-
-      --size-input-sm: 2.25rem; /* 36px height */
-      --size-input-md: 2.75rem; /* 44px height */
-      --size-input-lg: 3.25rem; /* 52px height */
+      --size-button-sm: 2.25rem;
+      --size-button-md: 2.75rem;
+      --size-button-lg: 3.25rem;
+      --size-input-sm: 2.25rem;
+      --size-input-md: 2.75rem;
+      --size-input-lg: 3.25rem;
     }
   }
 
@@ -100,6 +94,17 @@
   }
 
   /* COLOR THEME VARIANTS */
+
+  /* Blue (Default) */
+  [data-color-theme="blue"] {
+    --color-primary-50: 240 249 255;
+    --color-primary-100: 219 234 254;
+    --color-primary-500: 59 130 246;
+    --color-primary-600: 37 99 235;
+    --color-primary-900: 30 58 138;
+  }
+
+  /* Purple */
   [data-color-theme="purple"] {
     --color-primary-50: 250 245 255;
     --color-primary-100: 243 232 255;
@@ -108,12 +113,58 @@
     --color-primary-900: 88 28 135;
   }
 
+  /* Green */
   [data-color-theme="green"] {
     --color-primary-50: 240 253 244;
     --color-primary-100: 220 252 231;
     --color-primary-500: 34 197 94;
     --color-primary-600: 22 163 74;
     --color-primary-900: 20 83 45;
+  }
+
+  /* Red */
+  [data-color-theme="red"] {
+    --color-primary-50: 254 242 242;
+    --color-primary-100: 254 226 226;
+    --color-primary-500: 239 68 68;
+    --color-primary-600: 220 38 38;
+    --color-primary-900: 127 29 29;
+  }
+
+  /* Orange */
+  [data-color-theme="orange"] {
+    --color-primary-50: 255 247 237;
+    --color-primary-100: 255 237 213;
+    --color-primary-500: 249 115 22;
+    --color-primary-600: 234 88 12;
+    --color-primary-900: 154 52 18;
+  }
+
+  /* Pink */
+  [data-color-theme="pink"] {
+    --color-primary-50: 253 242 248;
+    --color-primary-100: 252 231 243;
+    --color-primary-500: 236 72 153;
+    --color-primary-600: 219 39 119;
+    --color-primary-900: 131 24 67;
+  }
+
+  /* Indigo */
+  [data-color-theme="indigo"] {
+    --color-primary-50: 238 242 255;
+    --color-primary-100: 224 231 255;
+    --color-primary-500: 99 102 241;
+    --color-primary-600: 79 70 229;
+    --color-primary-900: 49 46 129;
+  }
+
+  /* Emerald */
+  [data-color-theme="emerald"] {
+    --color-primary-50: 236 253 245;
+    --color-primary-100: 209 250 229;
+    --color-primary-500: 16 185 129;
+    --color-primary-600: 5 150 105;
+    --color-primary-900: 6 78 59;
   }
 
   /* BASE STYLING WITH RESPONSIVE VARIABLES */
@@ -125,7 +176,7 @@
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* SEMANTIC TEXT SIZES - These automatically adapt! */
+  /* SEMANTIC TEXT SIZES */
   .text-responsive-xs {
     font-size: var(--text-xs);
   }
@@ -157,7 +208,7 @@
     font-size: var(--text-6xl);
   }
 
-  /* SEMANTIC SPACING - Also automatically adapts! */
+  /* SEMANTIC SPACING */
   .space-responsive-xs {
     gap: var(--space-xs);
   }

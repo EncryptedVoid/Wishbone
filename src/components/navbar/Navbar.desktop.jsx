@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Gift,
   User,
   Settings,
   LogOut,
@@ -10,28 +9,53 @@ import {
   Users,
   Heart,
   Camera,
-  Home,
-  ChevronDown
+  ChevronDown,
+  Bell,
+  UserPlus
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import ThemeToggle from '../ui/ThemeToggle';
 import ColorThemeSelector from '../ui/ColorThemeSelector';
+import Button from '../ui/Button';
+import Avatar from '../ui/Avatar';
+import Badge from '../ui/Badge';
+import { cn } from '../../utils/cn';
 
 const NavbarDesktop = () => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
   const [scrolled, setScrolled] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   useEffect(() => {
+    let ticking = false;
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      if (!ticking) {
+        requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 20);
+          ticking = false;
+        });
+        ticking = true;
+      }
     };
-    window.addEventListener('scroll', handleScroll);
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuOpen && !event.target.closest('[data-user-menu]')) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [userMenuOpen]);
 
   const handleAuthClick = async () => {
     if (user) {
@@ -46,22 +70,32 @@ const NavbarDesktop = () => {
     }
   };
 
-  const navItems = [
-    { path: '/', label: 'Home', icon: Home },
-    ...(user ? [
-      { path: '/dashboard', label: 'Dashboard', icon: User },
-      { path: '/wishlist', label: 'Wishlist', icon: Heart },
-      { path: '/events', label: 'Events', icon: Calendar },
-      { path: '/friends', label: 'Friends', icon: Users },
-      { path: '/memoirs', label: 'Memoirs', icon: Camera },
-    ] : [])
+  // Clean navigation - no Home when authenticated, no redundant items
+  const navItems = user ? [
+    { path: '/dashboard', label: 'Dashboard', icon: User },
+    { path: '/wishlist', label: 'Wishlist', icon: Heart },
+    { path: '/events', label: 'Events', icon: Calendar },
+    { path: '/memoirs', label: 'Memoirs', icon: Camera },
+  ] : [];
+
+  // User menu items - consolidated Friends and Notifications here
+  const userMenuItems = [
+    { path: '/friends', label: 'Friends', icon: Users },
+    {
+      action: () => {},
+      label: 'Notifications',
+      icon: Bell,
+      badge: 3, // You can make this dynamic
+      isAction: true
+    },
+    { path: '/settings', label: 'Settings', icon: Settings },
   ];
 
   if (loading) {
     return (
-      <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-6 h-full flex items-center justify-center">
-          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+      <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-background/80 backdrop-blur-sm border-b border-border">
+        <div className="max-w-7xl mx-auto px-responsive-lg h-full flex items-center justify-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
         </div>
       </div>
     );
@@ -69,144 +103,220 @@ const NavbarDesktop = () => {
 
   return (
     <motion.nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={cn(
+        'fixed top-0 left-0 right-0 z-50 transition-all duration-300',
         scrolled
-          ? 'bg-white/95 backdrop-blur-md shadow-lg border-b border-gray-200/50'
-          : 'bg-white/90 backdrop-blur-sm border-b border-gray-200/30'
-      }`}
+          ? 'bg-background/95 backdrop-blur-md shadow-strong border-b border-border/80'
+          : 'bg-background/90 backdrop-blur-sm border-b border-border/50'
+      )}
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
     >
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-7xl mx-auto px-responsive-lg">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+
+          {/* Logo using your assets */}
           <motion.div
-            className="flex items-center space-x-3 cursor-pointer"
+            className="flex items-center space-x-responsive-sm cursor-pointer"
             onClick={() => navigate(user ? '/dashboard' : '/')}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-medium">
               <img
                 src="/assets/logo.png"
-                alt="Logo"
+                alt="EyeWantIt Logo"
                 className="w-5 h-5 object-contain"
+                onError={(e) => {
+                  // Fallback if logo doesn't exist
+                  e.target.style.display = 'none';
+                  e.target.nextSibling.style.display = 'block';
+                }}
               />
+              <span style={{ display: 'none' }} className="text-white font-bold text-sm">E</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">EyeWantIt</span>
+            <span className="text-responsive-xl font-bold text-foreground">
+              EyeWantIt
+            </span>
           </motion.div>
 
-          {/* Navigation Items */}
-          <div className="hidden lg:flex items-center space-x-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = location.pathname === item.path;
+          {/* Navigation Items - only show when authenticated */}
+          {user && (
+            <div className="hidden lg:flex items-center space-x-responsive-lg">
+              {navItems.map((item) => {
+                const Icon = item.icon;
+                const isActive = location.pathname === item.path;
 
-              return (
-                <motion.div key={item.path} className="relative">
-                  <Link
-                    to={item.path}
-                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                      isActive
-                        ? 'text-purple-600 bg-purple-50'
-                        : 'text-gray-700 hover:text-purple-600 hover:bg-gray-50'
-                    }`}
+                return (
+                  <motion.div
+                    key={item.path}
+                    whileHover={{ y: -1 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 10 }}
                   >
-                    <Icon className="w-4 h-4" />
-                    <span>{item.label}</span>
-                  </Link>
-                  {isActive && (
-                    <motion.div
-                      className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full"
-                      layoutId="activeIndicator"
-                      initial={false}
-                    />
-                  )}
-                </motion.div>
-              );
-            })}
-          </div>
+                    <Link
+                      to={item.path}
+                      className={cn(
+                        'flex items-center space-x-responsive-sm px-responsive-md py-responsive-sm rounded-lg',
+                        'font-medium transition-all duration-200 relative',
+                        isActive
+                          ? 'text-primary-600 bg-primary-50 shadow-soft'
+                          : 'text-foreground hover:text-primary-600 hover:bg-surface'
+                      )}
+                    >
+                      <Icon className="w-4 h-4" />
+                      <span className="text-responsive-sm">{item.label}</span>
+
+                      {isActive && (
+                        <motion.div
+                          className="absolute bottom-0 left-2 right-2 h-0.5 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
+                          layoutId="activeIndicator"
+                          initial={false}
+                        />
+                      )}
+                    </Link>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Right Section */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-responsive-lg">
+
             {/* Theme Controls */}
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="flex items-center space-x-responsive-sm">
               <ThemeToggle />
               <ColorThemeSelector />
             </div>
 
             {user ? (
-              /* User Menu */
-              <div className="relative">
+              /* User Menu - Contains Friends, Notifications, Settings */
+              <div className="relative" data-user-menu>
                 <motion.button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors duration-200"
+                  className={cn(
+                    'flex items-center space-x-responsive-sm px-responsive-sm py-responsive-sm rounded-lg',
+                    'bg-surface border border-border hover:bg-primary-50 hover:border-primary-200',
+                    'transition-all duration-200',
+                    userMenuOpen && 'bg-primary-50 border-primary-200'
+                  )}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
+                  <Avatar
+                    name={user.email?.split('@')[0] || 'User'}
+                    size="sm"
+                    status="online"
+                  />
+                  <div className="hidden sm:block text-left">
+                    <div className="text-responsive-sm font-medium text-foreground">
+                      {user.email?.split('@')[0] || 'User'}
+                    </div>
+                    <div className="text-responsive-xs text-muted">Online</div>
                   </div>
-                  <span className="hidden sm:block text-sm font-medium text-gray-700">
-                    {user.email?.split('@')[0] || 'User'}
-                  </span>
-                  <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${
-                    userMenuOpen ? 'rotate-180' : ''
-                  }`} />
+                  <ChevronDown
+                    className={cn(
+                      'w-4 h-4 text-muted transition-transform duration-200',
+                      userMenuOpen && 'rotate-180'
+                    )}
+                  />
                 </motion.button>
 
                 <AnimatePresence>
                   {userMenuOpen && (
-                    <>
-                      <motion.div
-                        className="fixed inset-0 z-40"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        onClick={() => setUserMenuOpen(false)}
-                      />
-                      <motion.div
-                        className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
-                        initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <div className="py-2">
-                          <Link
-                            to="/settings"
-                            className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                            onClick={() => setUserMenuOpen(false)}
-                          >
-                            <Settings className="w-4 h-4" />
-                            <span>Settings</span>
-                          </Link>
-                          <div className="border-t border-gray-100 my-1"></div>
-                          <button
-                            onClick={() => {
-                              setUserMenuOpen(false);
-                              handleAuthClick();
-                            }}
-                            className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
-                          >
-                            <LogOut className="w-4 h-4" />
-                            <span>Sign Out</span>
-                          </button>
+                    <motion.div
+                      className="absolute right-0 top-full mt-2 w-64 bg-background border border-border rounded-lg shadow-strong z-50"
+                      initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      {/* User Info */}
+                      <div className="p-4 border-b border-border">
+                        <div className="flex items-center space-x-3">
+                          <Avatar
+                            name={user.email?.split('@')[0] || 'User'}
+                            size="md"
+                            status="online"
+                          />
+                          <div>
+                            <div className="font-semibold text-foreground">
+                              {user.email?.split('@')[0] || 'User'}
+                            </div>
+                            <div className="text-responsive-sm text-muted">
+                              {user.email}
+                            </div>
+                          </div>
                         </div>
-                      </motion.div>
-                    </>
+                      </div>
+
+                      {/* Menu Items */}
+                      <div className="py-2">
+                        {userMenuItems.map((item, index) => {
+                          const Icon = item.icon;
+
+                          if (item.isAction) {
+                            return (
+                              <button
+                                key={index}
+                                onClick={() => {
+                                  item.action();
+                                  setUserMenuOpen(false);
+                                }}
+                                className="w-full flex items-center justify-between px-4 py-3 text-responsive-sm text-foreground hover:bg-surface transition-colors duration-200"
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <Icon className="w-4 h-4" />
+                                  <span>{item.label}</span>
+                                </div>
+                                {item.badge && item.badge > 0 && (
+                                  <Badge variant="error" size="sm">
+                                    {item.badge}
+                                  </Badge>
+                                )}
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <Link
+                              key={item.path}
+                              to={item.path}
+                              className="flex items-center space-x-3 px-4 py-3 text-responsive-sm text-foreground hover:bg-surface transition-colors duration-200"
+                              onClick={() => setUserMenuOpen(false)}
+                            >
+                              <Icon className="w-4 h-4" />
+                              <span>{item.label}</span>
+                            </Link>
+                          );
+                        })}
+
+                        <div className="border-t border-border my-2"></div>
+
+                        <button
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            handleAuthClick();
+                          }}
+                          className="w-full flex items-center space-x-3 px-4 py-3 text-responsive-sm text-error hover:bg-error/5 transition-colors duration-200"
+                        >
+                          <LogOut className="w-4 h-4" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </motion.div>
                   )}
                 </AnimatePresence>
               </div>
             ) : (
-              /* Login/Signup Buttons */
-              <motion.button
+              /* Single Auth Button */
+              <Button
+                variant="primary"
+                size="md"
                 onClick={handleAuthClick}
-                className="px-6 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-medium rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-md hover:shadow-lg"
-                whileHover={{ scale: 1.05, y: -1 }}
-                whileTap={{ scale: 0.95 }}
                 disabled={loading}
+                className="shadow-medium hover:shadow-strong"
               >
                 {loading ? (
                   <div className="flex items-center space-x-2">
@@ -216,7 +326,7 @@ const NavbarDesktop = () => {
                 ) : (
                   'Get Started'
                 )}
-              </motion.button>
+              </Button>
             )}
           </div>
         </div>

@@ -4,10 +4,16 @@ import { Palette, Check } from 'lucide-react';
 import { useTheme } from '../../contexts/ThemeContext';
 import { cn } from '../../utils/cn';
 
+// TO ADD MORE COLORS: Simply add them to this array
 const colorOptions = [
   { id: 'blue', name: 'Blue', preview: 'bg-blue-500' },
   { id: 'purple', name: 'Purple', preview: 'bg-purple-500' },
   { id: 'green', name: 'Green', preview: 'bg-green-500' },
+  { id: 'red', name: 'Red', preview: 'bg-red-500' },
+  { id: 'orange', name: 'Orange', preview: 'bg-orange-500' },
+  { id: 'pink', name: 'Pink', preview: 'bg-pink-500' },
+  { id: 'indigo', name: 'Indigo', preview: 'bg-indigo-500' },
+  { id: 'emerald', name: 'Emerald', preview: 'bg-emerald-500' },
 ];
 
 const ColorThemeSelector = ({ className }) => {
@@ -40,8 +46,11 @@ const ColorThemeSelector = ({ className }) => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: -10 }}
               transition={{ duration: 0.2 }}
-              className="absolute top-full right-0 mt-2 p-2 bg-surface border border-border rounded-lg shadow-lg z-50 min-w-[150px]"
+              className="absolute top-full right-0 mt-2 p-2 bg-background border border-border rounded-lg shadow-strong z-50 min-w-[180px]"
             >
+              <div className="text-xs font-medium text-muted mb-2 px-2">
+                Theme Color
+              </div>
               {colorOptions.map((option) => (
                 <motion.button
                   key={option.id}
@@ -49,11 +58,13 @@ const ColorThemeSelector = ({ className }) => {
                     changeColorTheme(option.id);
                     setIsOpen(false);
                   }}
-                  className="w-full flex items-center space-x-3 p-2 rounded-md hover:bg-primary-50 transition-colors duration-200"
+                  className="w-full flex items-center justify-between p-2 rounded-md hover:bg-surface transition-colors duration-200"
                   whileHover={{ x: 2 }}
                 >
-                  <div className={cn("w-4 h-4 rounded-full", option.preview)} />
-                  <span className="text-sm text-foreground">{option.name}</span>
+                  <div className="flex items-center space-x-3">
+                    <div className={cn("w-4 h-4 rounded-full border border-border", option.preview)} />
+                    <span className="text-sm text-foreground">{option.name}</span>
+                  </div>
                   {colorTheme === option.id && (
                     <motion.div
                       initial={{ scale: 0 }}
