@@ -1,161 +1,282 @@
-import { useState } from 'react'
-import { default as LoginForm } from '../../components/auth/LoginForm'
-import { default as SignupForm } from '../../components/auth/SignupForm'
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Gift, Heart, Users, Sparkles, Star,
+  Shield, Smartphone, Globe, ArrowRight
+} from 'lucide-react';
+import LoginForm from '../../components/auth/LoginForm';
+import SignupForm from '../../components/auth/SignupForm';
+import { TabSwitcher, TabContent } from '../../components/ui/TabSwitcher';
+import { Card, CardContent } from '../../components/ui/Card';
+import Logo from '../../components/ui/Logo';
+import { cn } from '../../utils/cn';
 
+/**
+ * EyeWantIt Desktop Authentication Page
+ *
+ * Features EyeWantIt's wishlist and gift-giving concept with
+ * proper spacing for navbar overlay protection
+ */
 function AuthPageDesktop() {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [activeTab, setActiveTab] = useState('login');
+
+  // EyeWantIt feature highlights
+  const features = [
+    {
+      icon: Gift,
+      title: 'Wishlist Everything',
+      description: 'Create wishlists from any online store - Amazon, Best Buy, Shein, and more. Never forget what you want again.',
+      color: 'text-purple-400'
+    },
+    {
+      icon: Heart,
+      title: 'Smart Gift Giving',
+      description: 'Friends and family always know what to get you. No more awkward gift exchanges or duplicate presents.',
+      color: 'text-pink-400'
+    },
+    {
+      icon: Users,
+      title: 'Share with Anyone',
+      description: 'Public wishlists for birthdays, weddings, holidays. Private lists for personal shopping goals.',
+      color: 'text-blue-400'
+    }
+  ];
+
+  const authTabs = [
+    { id: 'login', label: 'Sign In' },
+    { id: 'signup', label: 'Create Account' }
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-12 xl:px-20">
-        <div className="mx-auto max-w-md">
-          <div className="mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-purple-600 rounded-3xl flex items-center justify-center mb-6">
-              <div className="w-10 h-10 bg-white rounded-xl"></div>
-            </div>
-            <h1 className="text-4xl font-bold text-white mb-6">
-              Welcome to Our Platform
-            </h1>
-            <p className="text-lg text-purple-200 leading-relaxed">
-              Join thousands of users who trust our platform for their daily workflow.
-              Experience seamless integration and powerful features designed for modern teams.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <span className="text-purple-100">Advanced security & encryption</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-              </div>
-              <span className="text-purple-100">Lightning fast performance</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                </svg>
-              </div>
-              <span className="text-purple-100">24/7 customer support</span>
-            </div>
-          </div>
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Background with patterns and textures */}
+      <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-purple-900 to-indigo-900">
+        {/* Animated background patterns */}
+        <div className="absolute inset-0 opacity-20">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse-gentle" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-pink-500/20 rounded-full blur-3xl animate-pulse-gentle" />
+          <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl animate-pulse-gentle" />
         </div>
+
+        {/* Subtle dot pattern overlay */}
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: 'radial-gradient(circle at 2px 2px, rgba(255,255,255,0.3) 1px, transparent 0)',
+            backgroundSize: '40px 40px'
+          }}
+        />
       </div>
 
-      {/* Right Side - Auth Form */}
-      <div className="flex-1 flex flex-col justify-center lg:px-8 xl:px-12">
-        <div className="mx-auto w-full max-w-md">
-          <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20">
-            {/* Header */}
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-white mb-2">
-                {isSignUp ? 'Create Account' : 'Welcome Back'}
-              </h2>
-              <p className="text-purple-200">
-                {isSignUp ? 'Join our community today' : 'Sign in to your account'}
+      {/* Main content with navbar spacing */}
+      <div className="relative z-10 flex min-h-screen pt-20 pb-8">
+        {/* Left Side - EyeWantIt Branding */}
+        <div className="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-between lg:p-8 xl:p-12">
+
+          {/* Main content */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="flex-1 max-w-2xl"
+          >
+            {/* Hero Section */}
+            <div className="mb-12">
+              <h1 className="text-5xl font-bold text-white mb-6 leading-tight">
+                Never Forget What You{' '}
+                <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+                  Want
+                </span>
+              </h1>
+              <p className="text-xl text-purple-200 leading-relaxed mb-8">
+                Create wishlists from any online store. Share them with friends and family.
+                Make gift-giving effortless and meaningful.
+              </p>
+
+              {/* How it works */}
+              <div className="grid grid-cols-3 gap-6 mb-8">
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-purple-500/20 rounded-xl flex items-center justify-center mb-3 mx-auto">
+                    <Gift className="w-6 h-6 text-purple-400" />
+                  </div>
+                  <div className="text-sm text-purple-300 font-medium">Add Items</div>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-pink-500/20 rounded-xl flex items-center justify-center mb-3 mx-auto">
+                    <Heart className="w-6 h-6 text-pink-400" />
+                  </div>
+                  <div className="text-sm text-pink-300 font-medium">Share Lists</div>
+                </div>
+                <div className="text-center">
+                  <div className="w-12 h-12 bg-blue-500/20 rounded-xl flex items-center justify-center mb-3 mx-auto">
+                    <Sparkles className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div className="text-sm text-blue-300 font-medium">Get Gifts</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Feature Highlights */}
+            <div className="space-y-6">
+              {features.map((feature, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.4 + index * 0.1, duration: 0.6 }}
+                  className="flex items-start space-x-4 group"
+                >
+                  <div className={cn(
+                    'w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0',
+                    'bg-white/10 backdrop-blur-sm border border-white/20',
+                    'group-hover:bg-white/20 group-hover:scale-110 transition-all duration-300'
+                  )}>
+                    <feature.icon className={cn('w-6 h-6', feature.color)} />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-white mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-purple-200 leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+
+          {/* Social Proof */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8, duration: 0.6 }}
+            className="mt-8"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-1">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                ))}
+              </div>
+              <p className="text-purple-300 text-sm">
+                "Finally, a way to keep track of everything I want!" - Sarah M.
               </p>
             </div>
+          </motion.div>
+        </div>
 
-            {/* Tab Switcher */}
-            <div className="flex bg-white/10 rounded-2xl p-1 mb-8 backdrop-blur-sm">
-              <button
-                onClick={() => setIsSignUp(false)}
-                className={`flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                  !isSignUp
-                    ? 'bg-white text-slate-900 shadow-lg'
-                    : 'text-purple-200 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                onClick={() => setIsSignUp(true)}
-                className={`flex-1 py-3 px-6 rounded-xl text-sm font-semibold transition-all duration-300 ${
-                  isSignUp
-                    ? 'bg-white text-slate-900 shadow-lg'
-                    : 'text-purple-200 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                Sign Up
-              </button>
-            </div>
+        {/* Right Side - Authentication */}
+        <div className="flex-1 flex flex-col justify-center lg:max-w-xl lg:px-8 xl:px-12">
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.4, duration: 0.8 }}
+            className="w-full max-w-md mx-auto"
+          >
+            {/* Auth Card */}
+            <Card className="bg-white/95 dark:bg-surface/95 backdrop-blur-xl border-white/20 shadow-2xl">
+              <CardContent size="lg">
+                {/* Header */}
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-foreground mb-2">
+                    {activeTab === 'login' ? 'Welcome Back' : 'Join EyeWantIt'}
+                  </h2>
+                  <p className="text-muted">
+                    {activeTab === 'login'
+                      ? 'Sign in to access your wishlists'
+                      : 'Start creating your wishlists today'
+                    }
+                  </p>
+                </div>
 
-            {/* Form Container with Slide Animation */}
-            <div className="relative overflow-hidden mb-8 min-h-[450px]">
-              <div
-                className={`transition-transform duration-500 ease-in-out ${
-                  isSignUp ? '-translate-x-full' : 'translate-x-0'
-                }`}
-              >
-                <div className="flex">
-                  <div className="w-full flex-shrink-0">
-                    <div className="[&_input]:bg-white/10 [&_input]:border-white/20 [&_input]:text-white [&_input]:placeholder-purple-200 [&_input:focus]:ring-white/30 [&_input:focus]:border-white/40 [&_button]:bg-white/10 [&_button]:border-white/20 [&_button]:text-white [&_div]:text-white [&_span]:text-purple-200">
-                      <LoginForm />
+                {/* Tab Switcher */}
+                <div className="mb-8">
+                  <TabSwitcher
+                    tabs={authTabs}
+                    activeTab={activeTab}
+                    onTabChange={setActiveTab}
+                  />
+                </div>
+
+                {/* Form Content */}
+                <div className="min-h-[300px]">
+                  <TabContent activeTab={activeTab} tabId="login">
+                    <LoginForm />
+                  </TabContent>
+
+                  <TabContent activeTab={activeTab} tabId="signup">
+                    <SignupForm />
+                  </TabContent>
+                </div>
+
+                {/* Social Login */}
+                <div className="mt-8">
+                  <div className="relative mb-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-border"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-4 bg-background text-muted">
+                        Or continue with
+                      </span>
                     </div>
                   </div>
-                  <div className="w-full flex-shrink-0 pl-8">
-                    <div className="[&_input]:bg-white/10 [&_input]:border-white/20 [&_input]:text-white [&_input]:placeholder-purple-200 [&_input:focus]:ring-white/30 [&_input:focus]:border-white/40 [&_button]:bg-white/10 [&_button]:border-white/20 [&_button]:text-white [&_div]:text-white [&_span]:text-purple-200">
-                      <SignupForm />
-                    </div>
+
+                  <div className="space-y-3">
+                    <motion.button
+                      className={cn(
+                        'w-full flex items-center justify-center py-3 px-4',
+                        'border border-border rounded-xl bg-surface hover:bg-surface/80',
+                        'text-sm font-medium text-foreground',
+                        'transition-all duration-200 hover:border-primary-500/50',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500/30'
+                      )}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => alert('Google OAuth - To be implemented')}
+                    >
+                      <Globe className="w-4 h-4 mr-3" />
+                      Continue with Google
+                      <ArrowRight className="w-4 h-4 ml-auto opacity-50" />
+                    </motion.button>
+
+                    <motion.button
+                      className={cn(
+                        'w-full flex items-center justify-center py-3 px-4',
+                        'border border-border rounded-xl bg-surface hover:bg-surface/80',
+                        'text-sm font-medium text-foreground',
+                        'transition-all duration-200 hover:border-primary-500/50',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500/30'
+                      )}
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => alert('SMS Auth - To be implemented')}
+                    >
+                      <Smartphone className="w-4 h-4 mr-3" />
+                      Continue with Phone
+                      <ArrowRight className="w-4 h-4 ml-auto opacity-50" />
+                    </motion.button>
                   </div>
                 </div>
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Social Login */}
-            {/* <div>
-              <div className="relative mb-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-white/20"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-4 bg-white/10 text-purple-200 backdrop-blur-sm rounded-full">
-                    Or continue with
-                  </span>
-                </div>
+            {/* Security Notice */}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 1.0, duration: 0.4 }}
+              className="mt-6 text-center"
+            >
+              <div className="flex items-center justify-center space-x-2 text-white/80">
+                <Shield className="w-4 h-4" />
+                <span className="text-xs">
+                  Your data is protected with bank-level security
+                </span>
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <button className="w-full flex justify-center py-3 px-4 border border-white/20 rounded-xl bg-white/5 backdrop-blur-sm text-sm font-medium text-white hover:bg-white/10 transition-all duration-200 group">
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                  </svg>
-                </button>
-                <button className="w-full flex justify-center py-3 px-4 border border-white/20 rounded-xl bg-white/5 backdrop-blur-sm text-sm font-medium text-white hover:bg-white/10 transition-all duration-200 group">
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024 0 1.518.769 1.518 1.688 0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128 0 3.768-2.245 3.768-5.487 0-2.861-2.063-4.869-5.008-4.869-3.41 0-5.409 2.562-5.409 5.199 0 1.033.394 2.143.889 2.741.097.118.112.219.083.338-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.402.165-1.495-.69-2.433-2.878-2.433-4.646 0-3.776 2.748-7.252 7.92-7.252 4.158 0 7.392 2.967 7.392 6.923 0 4.135-2.607 7.462-6.233 7.462-1.214 0-2.357-.629-2.756-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24.009 12.017 24.009c6.624 0 11.99-5.367 11.99-11.988C24.007 5.367 18.641.001 12.017.001z"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* Footer */}
-            {/* <div className="mt-8 text-center">
-              <p className="text-xs text-purple-300">
-                By continuing, you agree to our{' '}
-                <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                  Terms of Service
-                </a>
-                {' '}and{' '}
-                <a href="#" className="text-blue-400 hover:text-blue-300 hover:underline transition-colors">
-                  Privacy Policy
-                </a>
-              </p>
-            </div> */}
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </div>
     </div>
@@ -163,3 +284,35 @@ function AuthPageDesktop() {
 }
 
 export default AuthPageDesktop;
+
+/*
+USAGE EXAMPLES:
+
+// Basic usage - automatically shows responsive desktop layout
+<AuthPageDesktop />
+
+// Integrated into routing system
+import { useIsMobile } from '../hooks/useIsMobile';
+import AuthPageDesktop from './Auth.desktop';
+import AuthPageMobile from './Auth.mobile';
+
+function AuthPage() {
+  const { isMobile } = useIsMobile();
+  return isMobile ? <AuthPageMobile /> : <AuthPageDesktop />;
+}
+
+FEATURES:
+- Split-screen layout optimized for desktop viewing
+- Animated background effects with glassmorphism
+- Integrated theme controls (dark/light + color themes)
+- Smooth tab transitions between login and signup
+- Professional feature highlights and social proof
+- Enterprise-focused branding and messaging
+- Responsive grid layouts that adapt to screen size
+- Accessibility-first design with proper focus management
+- Social login placeholder integration
+- Security messaging and trust indicators
+- Professional animations and micro-interactions
+- Semantic sizing system for consistent spacing
+- Theme-aware styling throughout all components
+*/

@@ -1,18 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { Gift, Heart, Menu, X } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'framer-motion';
+import {
+  Gift, Heart, Star, ExternalLink, Sparkles,
+  Users, TrendingUp, Globe, ArrowRight
+} from 'lucide-react';
+import Button from '../../components/ui/Button';
+import { cn } from '../../utils/cn';
 
 const HeroMobile = () => {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const { scrollY } = useScroll();
+  const y1 = useTransform(scrollY, [0, 200], [0, -30]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -20,276 +17,372 @@ const HeroMobile = () => {
       opacity: 1,
       transition: {
         duration: 0.8,
-        staggerChildren: 0.15
+        staggerChildren: 0.12
       }
     }
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 40 },
+    hidden: { opacity: 0, y: 30 },
     visible: {
       opacity: 1,
+      y: 0,
+      transition: { duration: 0.6, ease: "easeOut" }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, scale: 0.95, y: 20 },
+    visible: {
+      opacity: 1,
+      scale: 1,
       y: 0,
       transition: { duration: 0.7, ease: "easeOut" }
     }
   };
 
-  const cardVariants = {
-    hidden: { opacity: 0, scale: 0.9, y: 30 },
-    visible: {
-      opacity: 1,
-      scale: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: "easeOut" }
-    }
-  };
-
-  const floatingVariants = {
-    floating: {
-      y: [-3, 3, -3],
-      transition: {
-        duration: 4,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white relative overflow-hidden">
-      {/* Mobile Background Elements */}
+    <div className="min-h-screen bg-gradient-to-br from-background via-surface/30 to-background relative overflow-hidden">
+      {/* Mobile Background Effects */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-16 right-8 w-20 h-20 bg-purple-200 rounded-full opacity-25 blur-2xl"></div>
-        <div className="absolute top-40 left-4 w-16 h-16 bg-pink-200 rounded-full opacity-30 blur-xl"></div>
-        <div className="absolute bottom-32 right-12 w-24 h-24 bg-blue-200 rounded-full opacity-20 blur-2xl"></div>
-
-        {/* Mobile Dot Pattern */}
-        <div className="absolute top-0 right-0 w-32 h-32 opacity-10">
-          {[...Array(16)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-0.5 h-0.5 bg-gray-600 rounded-full"
-              style={{
-                left: `${(i % 4) * 8}px`,
-                top: `${Math.floor(i / 4) * 8}px`
-              }}
-            />
-          ))}
-        </div>
-
-        {/* Floating Shapes - Smaller for Mobile */}
+        {/* Gradient orbs optimized for mobile */}
         <motion.div
-          className="absolute top-20 left-8 w-4 h-4 border border-purple-300 rotate-45 opacity-40"
-          animate={{ rotate: [45, 405] }}
+          className="absolute top-1/4 right-8 w-64 h-64 rounded-full opacity-20 blur-3xl"
+          style={{
+            background: 'linear-gradient(135deg, rgb(168, 85, 247) 0%, rgb(236, 72, 153) 100%)',
+          }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.3, 0.2]
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+
+        <motion.div
+          className="absolute bottom-1/3 left-4 w-48 h-48 rounded-full opacity-15 blur-2xl"
+          style={{
+            background: 'linear-gradient(135deg, rgb(59, 130, 246) 0%, rgb(147, 51, 234) 100%)',
+          }}
+          animate={{
+            scale: [1.1, 1, 1.1],
+            opacity: [0.15, 0.25, 0.15]
+          }}
+          transition={{ duration: 10, repeat: Infinity }}
+        />
+
+        {/* Mobile dot pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.04] dark:opacity-[0.08]"
+          style={{
+            backgroundImage: `radial-gradient(circle at 2px 2px, currentColor 1px, transparent 0)`,
+            backgroundSize: '24px 24px'
+          }}
+        />
+
+        {/* Floating shapes for mobile */}
+        <motion.div
+          className="absolute top-32 right-12 w-4 h-4 border border-primary-400/40 rotate-45"
+          animate={{
+            rotate: [45, 405],
+            scale: [1, 1.3, 1]
+          }}
           transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
         />
+
         <motion.div
-          className="absolute bottom-1/4 right-8 w-3 h-3 bg-pink-300 rounded-full opacity-30"
-          animate={{ y: [-8, 8, -8] }}
-          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+          className="absolute bottom-1/2 left-8 w-3 h-3 bg-pink-400/40 rounded-full"
+          animate={{
+            y: [-15, 15, -15],
+            scale: [1, 1.5, 1]
+          }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
 
-      {/* Mobile Navigation */}
-      <motion.nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-white/95 backdrop-blur-md shadow-lg'
-            : 'bg-white/90 backdrop-blur-sm'
-        }`}
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-      >
-        <div className="px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-2">
-              <Gift className="h-6 w-6 text-purple-600" />
-              <span className="text-xl font-bold text-gray-900">EyeWantIt</span>
-            </div>
-            <motion.button
-              className="p-2 text-gray-700 hover:text-purple-600"
-              onClick={() => setMenuOpen(!menuOpen)}
-              whileTap={{ scale: 0.95 }}
-            >
-              {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-            </motion.button>
-          </div>
-        </div>
-      </motion.nav>
-
-      {/* Main Hero Content */}
-      <div className="pt-16 pb-12 px-4">
+      {/* Main Hero Content with proper navbar spacing */}
+      <div className="pt-24 pb-12 px-4 relative z-10">
         <motion.div
-          className="max-w-md mx-auto text-center space-y-8 min-h-[calc(100vh-4rem)] flex flex-col justify-center"
+          className="max-w-lg mx-auto text-center space-y-8 min-h-[calc(100vh-8rem)] flex flex-col justify-center"
           variants={containerVariants}
           initial="hidden"
           animate="visible"
         >
-          {/* Primary Content */}
-          <div className="space-y-6">
-            <motion.div variants={itemVariants}>
-              <h1 className="text-4xl font-bold text-gray-900 leading-tight">
-                Your Wishlist,{' '}
-                <span className="bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-                  Their Perfect Gift
-                </span>
-              </h1>
-            </motion.div>
-
-            <motion.p
-              className="text-lg text-gray-600 leading-relaxed px-2"
-              variants={itemVariants}
-            >
-              Create wishlists from any online store. Share with friends and family.
-              Never get unwanted gifts again!
-            </motion.p>
-
-            <motion.div
-              className="space-y-4 px-2"
-              variants={itemVariants}
-            >
-              <motion.button
-                className="w-full px-6 py-4 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-semibold rounded-lg text-lg shadow-lg active:shadow-md transition-all duration-200"
-                whileTap={{ scale: 0.98 }}
-              >
-                Start Your Wishlist
-              </motion.button>
-              <motion.button
-                className="w-full px-6 py-4 border-2 border-purple-600 text-purple-600 font-semibold rounded-lg text-lg active:bg-purple-50 transition-all duration-200"
-                whileTap={{ scale: 0.98 }}
-              >
-                See How It Works
-              </motion.button>
-            </motion.div>
-
-            <motion.div
-              className="flex flex-col items-center space-y-3"
-              variants={itemVariants}
-            >
-              <div className="flex -space-x-1">
-                {[1, 2, 3, 4, 5].map((i) => (
-                  <div
-                    key={i}
-                    className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 border-2 border-white flex items-center justify-center text-white text-xs font-semibold"
-                  >
-                    {String.fromCharCode(64 + i)}
-                  </div>
-                ))}
-              </div>
-              <div className="text-sm text-gray-600 text-center">
-                <span className="font-semibold">Join 12,000+</span><br />
-                happy gift-givers and receivers
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Mobile Wishlist Card */}
+          {/* Badge */}
           <motion.div
-            className="flex justify-center mt-12"
-            variants={cardVariants}
-            animate="floating"
-            variants={floatingVariants}
+            variants={itemVariants}
+            className="flex justify-center"
           >
-            <div className="w-full max-w-sm bg-white rounded-xl shadow-2xl overflow-hidden">
+            <motion.div
+              className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 text-sm font-medium"
+              whileHover={{ scale: 1.05 }}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>The Future of Gift Giving</span>
+            </motion.div>
+          </motion.div>
+
+          {/* Main Headline */}
+          <motion.div
+            variants={itemVariants}
+            className="space-y-4"
+          >
+            <h1 className="text-5xl font-bold text-foreground leading-[1.1] tracking-tight">
+              Never Get
+              <br />
+              <span className="bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 bg-clip-text text-transparent relative">
+                Unwanted Gifts
+                <motion.div
+                  className="absolute -bottom-1 left-0 right-0 h-2 bg-gradient-to-r from-purple-400/30 to-pink-400/30 rounded-full"
+                  animate={{
+                    scaleX: [0, 1],
+                    opacity: [0, 1]
+                  }}
+                  transition={{ delay: 1.5, duration: 1 }}
+                />
+              </span>
+              <br />
+              Again
+            </h1>
+          </motion.div>
+
+          <motion.p
+            className="text-lg text-muted leading-relaxed px-2"
+            variants={itemVariants}
+          >
+            Create wishlists from <strong>any online store</strong> - Amazon, Best Buy, Shein.
+            Share with friends and family. Make every gift perfect.
+          </motion.p>
+
+          {/* Feature highlights - mobile optimized */}
+          <motion.div
+            className="grid grid-cols-3 gap-3"
+            variants={itemVariants}
+          >
+            {[
+              { icon: Globe, text: "Any Store" },
+              { icon: Users, text: "Share Lists" },
+              { icon: TrendingUp, text: "Rate Items" }
+            ].map((feature, index) => (
+              <motion.div
+                key={index}
+                className="flex flex-col items-center space-y-2 p-3 rounded-xl bg-surface/50 dark:bg-surface/30 border border-border/50"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center">
+                  <feature.icon className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                </div>
+                <span className="text-xs font-medium text-foreground text-center">{feature.text}</span>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* CTA Button - Single button for mobile */}
+          <motion.div
+            className="px-2"
+            variants={itemVariants}
+          >
+            <Button
+              size="lg"
+              className="w-full group text-lg px-12 py-5 shadow-lg h-16"
+              onClick={() => window.location.href = '/auth'}
+            >
+              <div className="flex items-center justify-center space-x-3 w-full">
+                <Gift className="w-5 h-5" />
+                <span>Start Your Wishlist</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </div>
+            </Button>
+          </motion.div>
+
+          {/* Social Proof */}
+          <motion.div
+            className="flex flex-col items-center space-y-3"
+            variants={itemVariants}
+          >
+            <div className="flex -space-x-2">
+              {[
+                { bg: 'from-purple-400 to-pink-400', letter: 'S' },
+                { bg: 'from-blue-400 to-purple-400', letter: 'M' },
+                { bg: 'from-green-400 to-blue-400', letter: 'J' },
+                { bg: 'from-yellow-400 to-orange-400', letter: 'K' },
+                { bg: 'from-pink-400 to-red-400', letter: 'L' }
+              ].map((user, i) => (
+                <motion.div
+                  key={i}
+                  className={`w-10 h-10 rounded-full bg-gradient-to-br ${user.bg} border-2 border-background flex items-center justify-center text-white font-bold text-sm shadow-lg`}
+                  whileHover={{ scale: 1.1 }}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.8 + i * 0.1 }}
+                >
+                  {user.letter}
+                </motion.div>
+              ))}
+            </div>
+            <div className="text-center">
+              <div className="flex items-center justify-center space-x-1 mb-1">
+                <div className="flex">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
+                  ))}
+                </div>
+                <span className="font-semibold text-foreground ml-2">4.9</span>
+              </div>
+              <div className="text-sm text-muted">
+                <strong>15,000+</strong> happy gift-givers
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Mobile Wishlist Preview */}
+          <motion.div
+            className="mt-12"
+            variants={cardVariants}
+            style={{ y: y1 }}
+          >
+            <motion.div
+              className="w-full max-w-sm mx-auto bg-background/95 dark:bg-surface/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-border/50 overflow-hidden"
+              whileHover={{ scale: 1.02 }}
+            >
               {/* Card Header */}
-              <div className="p-5 border-b border-gray-100">
+              <div className="p-5 border-b border-border/50 bg-gradient-to-r from-primary-500/5 to-pink-500/5">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center text-white font-semibold text-sm">
-                    S
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-gray-900 text-sm">Sarah's Birthday Wishlist</h3>
-                    <p className="text-xs text-gray-500">3 items • Updated today</p>
+                  <motion.div
+                    className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold shadow-lg"
+                    whileHover={{ scale: 1.1, rotate: 360 }}
+                    transition={{ duration: 0.5 }}
+                  >
+                    A
+                  </motion.div>
+                  <div className="flex-1">
+                    <h3 className="font-bold text-foreground">Alex's Birthday List</h3>
+                    <div className="flex items-center space-x-3 text-xs text-muted">
+                      <span>4 items</span>
+                      <span>•</span>
+                      <span className="flex items-center space-x-1">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        <span>Live</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Compact Wishlist Items */}
+              {/* Wishlist Items - Mobile Optimized */}
               <div className="p-4 space-y-3">
-                {/* Item 1 - iPhone */}
-                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-lg">
-                    📱
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate">iPhone 15 Pro</h4>
-                    <p className="text-xs text-gray-500 truncate">Latest model with amazing camera</p>
-                    <div className="flex items-center mt-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Heart
-                          key={star}
-                          className={`w-3 h-3 ${
-                            star <= 5 ? 'text-red-500 fill-current' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
+                {[
+                  {
+                    emoji: '🎧',
+                    name: 'Sony WH-1000XM5',
+                    store: 'Best Buy',
+                    description: 'Noise cancellation headphones',
+                    desire: 5,
+                    price: '$399'
+                  },
+                  {
+                    emoji: '👟',
+                    name: 'Nike Air Max 90',
+                    store: 'Amazon',
+                    description: 'Classic comfort sneakers',
+                    desire: 4,
+                    price: '$120'
+                  },
+                  {
+                    emoji: '📱',
+                    name: 'iPhone 15 Pro Max',
+                    store: 'Apple',
+                    description: 'Latest flagship phone',
+                    desire: 5,
+                    price: '$1199'
+                  }
+                ].map((item, index) => (
+                  <motion.div
+                    key={index}
+                    className="flex items-center space-x-3 p-3 rounded-xl hover:bg-surface/50 dark:hover:bg-surface/30 transition-all duration-200"
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.2 + index * 0.1 }}
+                    whileHover={{ scale: 1.02 }}
+                  >
+                    <div className="w-14 h-14 bg-gradient-to-br from-surface to-surface/50 rounded-xl flex items-center justify-center text-xl shadow-sm">
+                      {item.emoji}
                     </div>
-                  </div>
-                </div>
-
-                {/* Item 2 - Nike Shoes */}
-                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-lg">
-                    👟
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate">Nike Air Max 270</h4>
-                    <p className="text-xs text-gray-500 truncate">Comfortable running shoes</p>
-                    <div className="flex items-center mt-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Heart
-                          key={star}
-                          className={`w-3 h-3 ${
-                            star <= 4 ? 'text-red-500 fill-current' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-semibold text-foreground text-sm truncate">{item.name}</h4>
+                        <span className="text-xs px-2 py-0.5 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-full flex-shrink-0">
+                          {item.store}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted truncate">{item.description}</p>
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex items-center space-x-0.5">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Heart
+                              key={star}
+                              className={cn(
+                                'w-3 h-3 transition-all duration-200',
+                                star <= item.desire
+                                  ? 'text-red-500 fill-current'
+                                  : 'text-border'
+                              )}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-sm font-semibold text-primary-600 dark:text-primary-400">
+                          {item.price}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Item 3 - Book */}
-                <div className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center text-lg">
-                    📚
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-gray-900 text-sm truncate">Atomic Habits</h4>
-                    <p className="text-xs text-gray-500 truncate">Life-changing book about habits</p>
-                    <div className="flex items-center mt-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Heart
-                          key={star}
-                          className={`w-3 h-3 ${
-                            star <= 3 ? 'text-red-500 fill-current' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
+                  </motion.div>
+                ))}
               </div>
 
               {/* Card Footer */}
-              <div className="p-4 bg-gray-50 border-t border-gray-100">
-                <button className="w-full py-2 text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors">
-                  View Full Wishlist
-                </button>
+              <div className="p-4 bg-gradient-to-r from-surface/80 to-surface/40 border-t border-border/50">
+                <motion.button
+                  className="w-full py-3 text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition-colors rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  View Full Wishlist →
+                </motion.button>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Floating Badge */}
+            {/* Floating Mobile Badges */}
             <motion.div
-              className="absolute -top-2 -right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold shadow-lg"
-              animate={{ scale: [1, 1.1, 1] }}
+              className="absolute -top-3 -right-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg"
+              animate={{
+                scale: [1, 1.1, 1],
+                boxShadow: [
+                  '0 4px 14px 0 rgba(0, 255, 0, 0.39)',
+                  '0 6px 20px 0 rgba(0, 255, 0, 0.45)',
+                  '0 4px 14px 0 rgba(0, 255, 0, 0.39)'
+                ]
+              }}
               transition={{ duration: 2, repeat: Infinity }}
             >
-              Live
+              🎉 Live
+            </motion.div>
+
+            <motion.div
+              className="absolute -bottom-3 -left-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg"
+              animate={{
+                y: [-1, 1, -1],
+                rotate: [-0.5, 0.5, -0.5]
+              }}
+              transition={{ duration: 4, repeat: Infinity }}
+            >
+              💝 Gift Ready
             </motion.div>
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Bottom spacing */}
+      <div className="h-8" />
     </div>
   );
 };
