@@ -6,12 +6,31 @@ import { cn } from '../../utils/cn';
 /**
  * Logo Component - Professional logo component following our design system
  *
- * Features:
- * - Responsive sizing using our design system
- * - Theme-aware styling
- * - Interactive animations
- * - Flexible icon/text composition
- * - Click handling for navigation
+ * This component provides a consistent brand representation with:
+ * - Responsive sizing using our semantic system
+ * - Theme-aware styling that adapts to light/dark modes
+ * - Interactive animations for better user experience
+ * - Flexible composition (icon-only or with text)
+ * - Graceful fallback when logo image fails to load
+ *
+ * @param {string} size - Size variant: 'sm' | 'md' | 'lg' (default: 'md')
+ * @param {boolean} showText - Whether to show brand text next to icon (default: true)
+ * @param {boolean} interactive - Whether logo should have hover/click animations (default: true)
+ * @param {string} className - Additional CSS classes
+ * @param {function} onClick - Click handler for navigation
+ * @param {object} ...props - Additional props passed to the container
+ *
+ * @example
+ * // Standard logo with click navigation
+ * <Logo onClick={() => navigate('/')} />
+ *
+ * @example
+ * // Compact logo for mobile headers
+ * <Logo size="sm" showText={false} />
+ *
+ * @example
+ * // Large logo for landing pages
+ * <Logo size="lg" interactive={false} />
  */
 const Logo = React.forwardRef(({
   size = 'md',
@@ -23,13 +42,14 @@ const Logo = React.forwardRef(({
 }, ref) => {
 
   // SIZE STYLES - Using our semantic sizing system
+  // Each size has coordinated icon, container, text, and decoration sizes
   const sizeClasses = {
     sm: {
-      container: 'space-x-responsive-sm',
-      icon: 'w-6 h-6',
-      iconContainer: 'w-7 h-7',
-      text: 'text-responsive-lg font-bold',
-      sparkle: 'w-3 h-3'
+      container: 'space-x-responsive-sm',    // Responsive spacing between elements
+      icon: 'w-6 h-6',                      // Main icon size
+      iconContainer: 'w-7 h-7',             // Container for icon background
+      text: 'text-responsive-lg font-bold',  // Responsive text size
+      sparkle: 'w-3 h-3'                    // Decorative sparkle size
     },
     md: {
       container: 'space-x-responsive-md',
@@ -49,16 +69,16 @@ const Logo = React.forwardRef(({
 
   const currentSize = sizeClasses[size];
 
-  // BASE STYLES
+  // BASE STYLES - Common layout and behavior
   const baseClasses = [
     'inline-flex items-center',
     currentSize.container,
-    interactive && 'cursor-pointer',
+    interactive && 'cursor-pointer',         // Only show pointer if interactive
     'transition-all duration-200 ease-in-out',
-    'select-none'
+    'select-none'                           // Prevent text selection
   ].filter(Boolean).join(' ');
 
-  // MOTION VARIANTS
+  // MOTION VARIANTS - Professional animation patterns
   const logoVariants = {
     initial: { scale: 1 },
     hover: interactive ? {
@@ -71,41 +91,59 @@ const Logo = React.forwardRef(({
     } : {}
   };
 
+  // Icon animation - subtle rotation on hover
   const iconVariants = {
     initial: { rotate: 0 },
     hover: interactive ? {
-      rotate: [0, -5, 5, 0],
+      rotate: [0, -5, 5, 0],               // Playful wiggle animation
       transition: { duration: 0.5, ease: "easeInOut" }
     } : {}
   };
 
+  // Sparkle decoration animation - continuous rotation
   const sparkleVariants = {
     animate: {
-      scale: [1, 1.2, 1],
-      rotate: [0, 180, 360],
+      scale: [1, 1.2, 1],                   // Gentle breathing effect
+      rotate: [0, 180, 360],                // Full rotation
       transition: {
-        duration: 3,
-        repeat: Infinity,
+        duration: 3,                        // 3 second cycle
+        repeat: Infinity,                   // Loop forever
         ease: "easeInOut"
       }
     }
   };
 
+  // Logo content structure
   const LogoContent = (
     <>
       {/* Icon Container with Gradient Background */}
       <motion.div
         className={cn(
           'relative rounded-lg flex items-center justify-center',
-          'bg-gradient-to-br from-primary-500 to-primary-600',
-          'shadow-medium',
+          'bg-gradient-to-br from-primary-500 to-primary-600', // Theme-aware gradient
+          'shadow-medium',                                      // Consistent shadow
           currentSize.iconContainer
         )}
         variants={iconVariants}
       >
-        <Gift className={cn('text-white', currentSize.icon)} />
+        {/* Primary logo image with fallback */}
+        <img
+          src="/assets/logo.png"
+          alt="EyeWantIt Logo"
+          className={cn('object-contain', currentSize.icon)}
+          onError={(e) => {
+            // Hide broken image and show fallback icon
+            e.target.style.display = 'none';
+            e.target.nextSibling.style.display = 'block';
+          }}
+        />
+        {/* Fallback icon (hidden by default) */}
+        <Gift
+          className={cn('text-white', currentSize.icon)}
+          style={{ display: 'none' }}
+        />
 
-        {/* Sparkle Animation in Corner */}
+        {/* Decorative Sparkle Animation */}
         <motion.div
           className="absolute -top-1 -right-1"
           variants={sparkleVariants}
@@ -120,6 +158,7 @@ const Logo = React.forwardRef(({
         <motion.span
           className={cn(
             'text-foreground tracking-tight',
+            // Gradient text effect that adapts to theme
             'bg-gradient-to-r from-foreground to-primary-600 bg-clip-text text-transparent',
             currentSize.text
           )}
@@ -133,6 +172,7 @@ const Logo = React.forwardRef(({
     </>
   );
 
+  // Render as button if interactive (has onClick), div otherwise
   if (onClick) {
     return (
       <motion.button
@@ -143,6 +183,7 @@ const Logo = React.forwardRef(({
         initial="initial"
         whileHover="hover"
         whileTap="tap"
+        aria-label="EyeWantIt Logo - Go to homepage"
         {...props}
       >
         {LogoContent}
@@ -167,3 +208,41 @@ const Logo = React.forwardRef(({
 Logo.displayName = 'Logo';
 
 export default Logo;
+
+/*
+USAGE EXAMPLES:
+
+// Standard navigation logo
+<Logo onClick={() => navigate('/')} />
+
+// Different sizes - all responsive
+<Logo size="sm" />           // Compact for mobile
+<Logo size="md" />           // Standard size
+<Logo size="lg" />           // Large for hero sections
+
+// Icon only for minimal layouts
+<Logo showText={false} />
+
+// Non-interactive for footers or static displays
+<Logo interactive={false} />
+
+// Custom styling while maintaining design system
+<Logo className="opacity-80" />
+
+FEATURES:
+- Automatically loads /assets/logo.png
+- Graceful fallback to Gift icon if image fails
+- Adapts size for mobile vs desktop
+- Changes colors based on light/dark theme
+- Changes accent colors based on color theme
+- Smooth hover and click animations
+- Decorative sparkle animation
+- Maintains brand consistency
+- Follows accessibility guidelines
+
+LOGO ASSET REQUIREMENTS:
+- Place your logo at: /assets/logo.png
+- Recommended: SVG or PNG with transparent background
+- Square aspect ratio works best
+- The component will automatically size and color it
+*/
