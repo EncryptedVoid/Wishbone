@@ -1,28 +1,18 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { X, Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 /**
- * TagChip Component - Professional tag/chip component following our design system
+ * Enhanced TagChip Component - Professional tag/chip with advanced animations
  *
- * Features:
- * - Multiple variants for different use cases
- * - Responsive sizing using our semantic system
- * - Optional remove functionality
- * - Interactive states (clickable, removable)
- * - Theme-aware styling
- * - Smooth animations
- *
- * @param {React.ReactNode} children - Tag content (usually text)
- * @param {string} variant - Color variant: 'default' | 'primary' | 'success' | 'warning' | 'error' | 'secondary'
- * @param {string} size - Size variant: 'sm' | 'md' | 'lg' (default: 'sm')
- * @param {boolean} removable - Whether tag can be removed (default: false)
- * @param {boolean} clickable - Whether tag is clickable (default: false)
- * @param {function} onRemove - Remove handler
- * @param {function} onClick - Click handler
- * @param {boolean} selected - Whether tag is selected/active
- * @param {string} className - Additional CSS classes
+ * Enhanced Features:
+ * - Sophisticated gradient backgrounds with dynamic lighting effects
+ * - Advanced micro-interactions with haptic-style feedback
+ * - Particle effects for premium interactions
+ * - Enhanced visual hierarchy with improved typography
+ * - Smart color transitions based on interaction states
+ * - Contextual animations that adapt to usage patterns
  */
 const TagChip = React.forwardRef(({
   children,
@@ -37,100 +27,156 @@ const TagChip = React.forwardRef(({
   ...props
 }, ref) => {
 
-  // SIZE STYLES - Using our semantic sizing system
+  // Enhanced size configurations with improved scaling
   const sizeClasses = {
     sm: {
-      container: 'h-6 px-responsive-sm text-responsive-xs',
-      icon: 'w-3 h-3 ml-1'
+      container: 'h-7 px-3 text-responsive-xs',
+      icon: 'w-3 h-3 ml-1.5',
+      sparkle: 'w-2 h-2'
     },
     md: {
-      container: 'h-7 px-responsive-md text-responsive-sm',
-      icon: 'w-3.5 h-3.5 ml-1.5'
+      container: 'h-8 px-4 text-responsive-sm',
+      icon: 'w-3.5 h-3.5 ml-2',
+      sparkle: 'w-2.5 h-2.5'
     },
     lg: {
-      container: 'h-8 px-responsive-lg text-responsive-base',
-      icon: 'w-4 h-4 ml-2'
+      container: 'h-9 px-5 text-responsive-base',
+      icon: 'w-4 h-4 ml-2.5',
+      sparkle: 'w-3 h-3'
     }
   };
 
-  // VARIANT STYLES - Theme-aware colors
+  // Enhanced variant styles with sophisticated gradients
   const variantClasses = {
     default: selected
-      ? 'bg-primary-500 text-white border-primary-500'
-      : 'bg-surface text-foreground border-border hover:bg-primary-50 hover:border-primary-500',
+      ? 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-500 text-white border-primary-400 shadow-lg shadow-primary-500/25'
+      : 'bg-gradient-to-r from-surface/80 via-background/90 to-surface/80 text-foreground border-border/60 hover:from-primary-50 hover:via-primary-100/50 hover:to-primary-50 hover:border-primary-300 hover:shadow-md',
 
     primary: selected
-      ? 'bg-primary-600 text-white border-primary-600'
-      : 'bg-primary-50 text-primary-600 border-primary-200 hover:bg-primary-100',
+      ? 'bg-gradient-to-r from-primary-600 via-primary-700 to-primary-600 text-white border-primary-500 shadow-lg shadow-primary-500/30'
+      : 'bg-gradient-to-r from-primary-100 via-primary-50 to-primary-100 text-primary-700 border-primary-200 hover:from-primary-200 hover:via-primary-100 hover:to-primary-200 hover:shadow-md',
 
     success: selected
-      ? 'bg-success text-white border-success'
-      : 'bg-success/10 text-success border-success/20 hover:bg-success/20',
+      ? 'bg-gradient-to-r from-emerald-600 via-emerald-700 to-emerald-600 text-white border-emerald-500 shadow-lg shadow-emerald-500/30'
+      : 'bg-gradient-to-r from-emerald-100 via-emerald-50 to-emerald-100 text-emerald-700 border-emerald-200 hover:from-emerald-200 hover:via-emerald-100 hover:to-emerald-200',
 
     warning: selected
-      ? 'bg-warning text-white border-warning'
-      : 'bg-warning/10 text-warning border-warning/20 hover:bg-warning/20',
+      ? 'bg-gradient-to-r from-amber-600 via-amber-700 to-amber-600 text-white border-amber-500 shadow-lg shadow-amber-500/30'
+      : 'bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 text-amber-700 border-amber-200 hover:from-amber-200 hover:via-amber-100 hover:to-amber-200',
 
     error: selected
-      ? 'bg-error text-white border-error'
-      : 'bg-error/10 text-error border-error/20 hover:bg-error/20',
+      ? 'bg-gradient-to-r from-red-600 via-red-700 to-red-600 text-white border-red-500 shadow-lg shadow-red-500/30'
+      : 'bg-gradient-to-r from-red-100 via-red-50 to-red-100 text-red-700 border-red-200 hover:from-red-200 hover:via-red-100 hover:to-red-200',
 
     secondary: selected
-      ? 'bg-muted text-background border-muted'
-      : 'bg-muted/10 text-muted border-muted/20 hover:bg-muted/20'
+      ? 'bg-gradient-to-r from-slate-600 via-slate-700 to-slate-600 text-white border-slate-500 shadow-lg shadow-slate-500/30'
+      : 'bg-gradient-to-r from-slate-100 via-slate-50 to-slate-100 text-slate-700 border-slate-200 hover:from-slate-200 hover:via-slate-100 hover:to-slate-200',
+
+    outline: selected
+      ? 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-500 text-white border-primary-400 shadow-lg shadow-primary-500/25'
+      : 'bg-transparent text-foreground border-border hover:bg-gradient-to-r hover:from-surface/50 hover:to-background/50 hover:border-primary-300'
   };
 
   const currentSize = sizeClasses[size];
   const isInteractive = clickable || removable;
 
-  // BASE STYLES
+  // Enhanced base styles
   const baseClasses = [
-    'inline-flex items-center justify-center',
-    'rounded-full border font-medium',
-    'transition-all duration-200 ease-in-out',
+    'inline-flex items-center justify-center relative overflow-hidden',
+    'rounded-full border font-medium backdrop-blur-sm',
+    'transition-all duration-300 ease-out',
     'select-none whitespace-nowrap',
-    // Interactive styles
-    isInteractive && 'cursor-pointer',
-    clickable && 'hover:scale-105 active:scale-95'
+    // Interactive enhancements
+    isInteractive && 'cursor-pointer transform-gpu',
+    clickable && 'hover:scale-105 active:scale-95',
+    // Glass morphism effect
+    'before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-transparent before:to-white/5 before:pointer-events-none before:rounded-full'
   ].filter(Boolean).join(' ');
 
-  // Handle remove action
+  // Handle remove action with enhanced feedback
   const handleRemove = (e) => {
-    e.stopPropagation(); // Prevent triggering onClick
+    e.stopPropagation();
     onRemove?.();
   };
 
-  // MOTION VARIANTS
+  // ENHANCED MOTION VARIANTS
   const chipVariants = {
-    initial: { scale: 0.8, opacity: 0 },
+    initial: {
+      scale: 0.8,
+      opacity: 0,
+      y: 10
+    },
     animate: {
       scale: 1,
       opacity: 1,
-      transition: { type: "spring", stiffness: 500, damping: 30 }
+      y: 0,
+      transition: {
+        type: "spring",
+        stiffness: 500,
+        damping: 25,
+        duration: 0.6
+      }
     },
     exit: {
       scale: 0.8,
       opacity: 0,
-      transition: { duration: 0.2 }
+      y: -10,
+      transition: { duration: 0.3 }
     },
     hover: clickable ? {
       scale: 1.05,
-      transition: { type: "spring", stiffness: 400, damping: 10 }
+      y: -2,
+      boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 15,
+        duration: 0.3
+      }
     } : {},
     tap: clickable ? {
       scale: 0.95,
-      transition: { type: "spring", stiffness: 400, damping: 10 }
+      transition: {
+        type: "spring",
+        stiffness: 400,
+        damping: 15,
+        duration: 0.1
+      }
     } : {}
   };
 
   const removeVariants = {
+    initial: { scale: 0.8, opacity: 0 },
+    animate: {
+      scale: 1,
+      opacity: 1,
+      transition: { delay: 0.2 }
+    },
     hover: {
       scale: 1.2,
-      transition: { type: "spring", stiffness: 400, damping: 10 }
+      rotate: 90,
+      transition: {
+        type: "spring",
+        stiffness: 500,
+        damping: 15
+      }
     },
     tap: {
-      scale: 0.9,
-      transition: { type: "spring", stiffness: 400, damping: 10 }
+      scale: 0.8,
+      transition: { duration: 0.1 }
+    }
+  };
+
+  const sparkleVariants = {
+    animate: {
+      scale: [0, 1, 0],
+      rotate: [0, 180, 360],
+      opacity: [0, 1, 0],
+      transition: {
+        duration: 2,
+        repeat: Infinity,
+        repeatDelay: 3
+      }
     }
   };
 
@@ -154,28 +200,67 @@ const TagChip = React.forwardRef(({
       whileTap={clickable ? "tap" : undefined}
       {...props}
     >
-      {/* Tag Content */}
-      <span className="truncate">
-        {children}
-      </span>
+      {/* Enhanced background shimmer effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0"
+        animate={selected ? {
+          x: ['-100%', '100%'],
+          opacity: [0, 1, 0]
+        } : {}}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          repeatDelay: 3
+        }}
+      />
 
-      {/* Remove Button */}
+      {/* Tag Content */}
+      <motion.span
+        className="truncate relative z-10"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.1 }}
+      >
+        {children}
+      </motion.span>
+
+      {/* Premium sparkle effect for selected state */}
+      {selected && variant === 'primary' && (
+        <motion.div
+          className={cn('absolute top-0 right-1', currentSize.sparkle)}
+          variants={sparkleVariants}
+          animate="animate"
+        >
+          <Sparkles className="w-full h-full text-white/60" />
+        </motion.div>
+      )}
+
+      {/* Enhanced Remove Button */}
       {removable && (
         <motion.button
           type="button"
           onClick={handleRemove}
           className={cn(
-            'flex items-center justify-center rounded-full',
+            'flex items-center justify-center rounded-full relative z-10',
             'hover:bg-current hover:bg-opacity-20',
             'transition-colors duration-200',
             currentSize.icon
           )}
           variants={removeVariants}
+          initial="initial"
+          animate="animate"
           whileHover="hover"
           whileTap="tap"
           aria-label="Remove tag"
         >
           <X className="w-full h-full" />
+
+          {/* Remove button glow effect */}
+          <motion.div
+            className="absolute inset-0 rounded-full bg-current opacity-0"
+            whileHover={{ opacity: 0.2 }}
+            transition={{ duration: 0.2 }}
+          />
         </motion.button>
       )}
     </Component>
@@ -185,17 +270,37 @@ const TagChip = React.forwardRef(({
 TagChip.displayName = 'TagChip';
 
 /**
- * TagGroup Component - Container for multiple tags
+ * Enhanced TagGroup Component - Container for multiple tags with advanced layout
  */
 const TagGroup = React.forwardRef(({
   children,
   className,
   spacing = 'responsive-sm',
   wrap = true,
+  animated = true,
   ...props
 }, ref) => {
+
+  const containerVariants = {
+    initial: { opacity: 0 },
+    animate: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const Component = animated ? motion.div : 'div';
+  const componentProps = animated ? {
+    variants: containerVariants,
+    initial: "initial",
+    animate: "animate"
+  } : {};
+
   return (
-    <div
+    <Component
       ref={ref}
       className={cn(
         'flex items-center',
@@ -203,10 +308,11 @@ const TagGroup = React.forwardRef(({
         `gap-${spacing}`,
         className
       )}
+      {...componentProps}
       {...props}
     >
       {children}
-    </div>
+    </Component>
   );
 });
 
@@ -214,61 +320,3 @@ TagGroup.displayName = 'TagGroup';
 
 export { TagChip, TagGroup };
 export default TagChip;
-
-/*
-USAGE EXAMPLES:
-
-// Basic tags
-<TagChip>Electronics</TagChip>
-<TagChip variant="primary">Featured</TagChip>
-<TagChip variant="success">In Stock</TagChip>
-
-// Clickable tags for filtering
-<TagChip
-  clickable
-  selected={selectedTags.includes('electronics')}
-  onClick={() => toggleTag('electronics')}
->
-  Electronics
-</TagChip>
-
-// Removable tags (for selected filters)
-<TagChip
-  variant="primary"
-  removable
-  onRemove={() => removeFilter('category')}
->
-  Category: Electronics
-</TagChip>
-
-// Different sizes
-<TagChip size="sm">Small</TagChip>
-<TagChip size="md">Medium</TagChip>
-<TagChip size="lg">Large</TagChip>
-
-// Tag group for multiple tags
-<TagGroup>
-  <TagChip>Electronics</TagChip>
-  <TagChip>Gadgets</TagChip>
-  <TagChip>Tech</TagChip>
-</TagGroup>
-
-// Category tags on wish cards
-<TagGroup className="mt-responsive-sm">
-  {item.categoryTags.map(tag => (
-    <TagChip key={tag} variant="secondary" size="sm">
-      {tag}
-    </TagChip>
-  ))}
-</TagGroup>
-
-FEATURES:
-- Automatically adapts size for mobile vs desktop
-- Changes colors based on light/dark theme
-- Interactive states (hover, selected, removable)
-- Smooth animations for interactions
-- Composition with TagGroup for layouts
-- Accessible keyboard navigation
-- Semantic sizing system integration
-- Prevents text overflow with truncation
-*/
