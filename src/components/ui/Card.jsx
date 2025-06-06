@@ -4,14 +4,14 @@ import { Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 /**
- * Enhanced Card Component - Advanced card system with sophisticated visual design
+ * Card Component - Advanced card system with sophisticated visual design
  *
- * Enhanced Features:
+ * Features:
  * - Multi-layer glassmorphism with dynamic lighting effects
  * - Advanced hover animations with elevation and perspective
- * - Enhanced variant styling with gradient backgrounds
+ * - variant styling with gradient backgrounds
  * - Sophisticated micro-interactions with contextual feedback
- * - Improved visual hierarchy with enhanced spacing
+ * - Improved visual hierarchy with spacing
  * - Dynamic particle effects for premium interactions
  */
 const Card = React.forwardRef(({
@@ -25,14 +25,14 @@ const Card = React.forwardRef(({
   ...props
 }, ref) => {
 
-  // Enhanced size styles with improved scaling
+  // size styles with improved scaling
   const sizeClasses = {
     sm: 'p-4',
     md: 'p-6',
     lg: 'p-8'
   };
 
-  // Enhanced variant styles with sophisticated gradients
+  // variant styles with sophisticated gradients
   const variantClasses = {
     default: [
       'bg-gradient-to-br from-surface/90 via-background/95 to-surface/80',
@@ -65,14 +65,14 @@ const Card = React.forwardRef(({
     ].join(' ')
   };
 
-  // Enhanced interactive styles
+  // interactive styles
   const interactiveClasses = interactive ? [
     'cursor-pointer transition-all duration-300 transform-gpu',
     'hover:scale-[1.02] active:scale-[0.98]',
     'focus:outline-none focus:ring-2 focus:ring-primary-500/30'
   ].join(' ') : '';
 
-  // Base styles with enhanced glassmorphism
+  // Base styles with glassmorphism
   const baseClasses = [
     'rounded-xl backdrop-blur-md relative overflow-hidden',
     'transition-all duration-300 ease-out',
@@ -81,7 +81,7 @@ const Card = React.forwardRef(({
     'after:absolute after:inset-0 after:bg-gradient-to-t after:from-primary-500/5 after:via-transparent after:to-transparent after:pointer-events-none'
   ].join(' ');
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const cardVariants = {
     initial: {
       scale: 1,
@@ -157,7 +157,7 @@ const Card = React.forwardRef(({
       }}
       {...props}
     >
-      {/* Enhanced ambient glow effect */}
+      {/* ambient glow effect */}
       {interactive && (
         <motion.div
           className="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-transparent to-primary-600/10 opacity-0 rounded-xl"
@@ -187,7 +187,7 @@ const Card = React.forwardRef(({
         {children}
       </motion.div>
 
-      {/* Enhanced shimmer effect */}
+      {/* shimmer effect */}
       <motion.div
         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 -skew-x-12"
         animate={interactive ? {
@@ -207,7 +207,7 @@ const Card = React.forwardRef(({
 Card.displayName = 'Card';
 
 /**
- * Enhanced CardHeader Component
+ * CardHeader Component
  */
 const CardHeader = React.forwardRef(({
   className,
@@ -229,7 +229,7 @@ const CardHeader = React.forwardRef(({
 CardHeader.displayName = 'CardHeader';
 
 /**
- * Enhanced CardTitle Component
+ * CardTitle Component
  */
 const CardTitle = React.forwardRef(({
   className,
@@ -255,7 +255,7 @@ const CardTitle = React.forwardRef(({
 CardTitle.displayName = 'CardTitle';
 
 /**
- * Enhanced CardDescription Component
+ * CardDescription Component
  */
 const CardDescription = React.forwardRef(({
   className,
@@ -280,7 +280,7 @@ const CardDescription = React.forwardRef(({
 CardDescription.displayName = 'CardDescription';
 
 /**
- * Enhanced CardContent Component
+ * CardContent Component
  */
 const CardContent = React.forwardRef(({
   className,
@@ -302,7 +302,7 @@ const CardContent = React.forwardRef(({
 CardContent.displayName = 'CardContent';
 
 /**
- * Enhanced CardFooter Component
+ * CardFooter Component
  */
 const CardFooter = React.forwardRef(({
   className,

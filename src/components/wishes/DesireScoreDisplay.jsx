@@ -4,13 +4,13 @@ import { Heart, Star, Flame, Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 /**
- * Enhanced DesireScoreDisplay Component - Visual representation of desire score with 5-heart system
+ * DesireScoreDisplay Component - Visual representation of desire score with 5-heart system
  *
- * Enhanced Features:
+ * Features:
  * - Converted to 5-heart system while maintaining 1-10 internal scoring
  * - Advanced heart animations with pulsing, scaling, and color transitions
  * - Sophisticated hover effects with predictive highlighting
- * - Enhanced color psychology with gradient transitions
+ * - color psychology with gradient transitions
  * - Improved micro-interactions with haptic-style feedback
  * - Dynamic sparkle effects for high-value scores
  * - Advanced visual hierarchy with contextual sizing
@@ -40,7 +40,7 @@ const DesireScoreDisplay = React.forwardRef(({
   ...props
 }, ref) => {
 
-  // Enhanced size configuration with improved scaling
+  // size configuration with improved scaling
   const sizeClasses = {
     sm: {
       icon: 'w-4 h-4',
@@ -67,7 +67,7 @@ const DesireScoreDisplay = React.forwardRef(({
 
   const currentSize = sizeClasses[size];
 
-  // Enhanced variant icons
+  // variant icons
   const variantIcons = {
     hearts: Heart,
     stars: Star,
@@ -90,7 +90,7 @@ const DesireScoreDisplay = React.forwardRef(({
     return 'text-border';
   };
 
-  // Enhanced gradient colors for backgrounds
+  // gradient colors for backgrounds
   const getGradientColor = (currentScore) => {
     if (currentScore <= 2) return 'from-slate-500/20 to-slate-600/30';
     if (currentScore <= 4) return 'from-orange-500/20 to-orange-600/30';
@@ -99,7 +99,7 @@ const DesireScoreDisplay = React.forwardRef(({
     return 'from-rose-500/20 to-rose-600/30';
   };
 
-  // Enhanced bar fill color mapping
+  // bar fill color mapping
   const getBarFillColor = (currentScore) => {
     if (currentScore <= 2) return 'bg-slate-400';
     if (currentScore <= 4) return 'bg-orange-400';
@@ -129,7 +129,7 @@ const DesireScoreDisplay = React.forwardRef(({
     // This could be used for hover preview effects
   };
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const containerVariants = {
     initial: { opacity: 0, scale: 0.9 },
     animate: {
@@ -199,7 +199,7 @@ const DesireScoreDisplay = React.forwardRef(({
     }
   };
 
-  // Enhanced 5-heart display rendering
+  // 5-heart display rendering
   const renderHeartsVariant = () => {
     const maxHearts = 5;
     const IconComponent = variantIcons[variant];
@@ -326,7 +326,7 @@ const DesireScoreDisplay = React.forwardRef(({
     );
   };
 
-  // Enhanced numeric display
+  // numeric display
   const renderNumericVariant = () => (
     <motion.div
       className={cn('flex items-center', currentSize.gap)}
@@ -349,7 +349,7 @@ const DesireScoreDisplay = React.forwardRef(({
     </motion.div>
   );
 
-  // Enhanced bar display
+  // bar display
   const renderBarVariant = () => (
     <div className="flex items-center w-full max-w-32">
       <div className={cn('flex-1 bg-border rounded-full overflow-hidden', currentSize.bar)}>
@@ -401,7 +401,7 @@ const DesireScoreDisplay = React.forwardRef(({
       transition={{ duration: 0.5 }}
       {...props}
     >
-      {/* Enhanced label with contextual messaging */}
+      {/* label with contextual messaging */}
       {showLabel && (
         <motion.div
           className="mb-2"
@@ -427,7 +427,7 @@ const DesireScoreDisplay = React.forwardRef(({
         </motion.div>
       )}
 
-      {/* Enhanced score display with background gradient */}
+      {/* score display with background gradient */}
       <motion.div
         className={cn(
           'relative rounded-xl transition-all duration-500',

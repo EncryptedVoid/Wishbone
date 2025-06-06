@@ -4,12 +4,12 @@ import { X, Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 /**
- * Enhanced Modal Component - Advanced modal system with sophisticated animations
+ * Modal Component - Advanced modal system with sophisticated animations
  *
- * Enhanced Features:
+ * Features:
  * - Multi-layer glassmorphism with dynamic blur effects
  * - Sophisticated entrance/exit animations with coordinated timing
- * - Enhanced backdrop with particle effects
+ * - backdrop with particle effects
  * - Advanced size variants with responsive scaling
  * - Improved accessibility with focus management
  * - Contextual animations based on modal content
@@ -28,7 +28,7 @@ const Modal = React.forwardRef(({
 
   const modalRef = useRef(null);
 
-  // Enhanced size configurations
+  // size configurations
   const sizeClasses = {
     sm: 'max-w-md',
     md: 'max-w-lg',
@@ -68,7 +68,7 @@ const Modal = React.forwardRef(({
     }
   };
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const backdropVariants = {
     initial: { opacity: 0 },
     animate: {
@@ -136,7 +136,7 @@ const Modal = React.forwardRef(({
     <AnimatePresence mode="wait">
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Enhanced Backdrop */}
+          {/* Backdrop */}
           {backdrop && (
             <motion.div
               variants={backdropVariants}
@@ -163,7 +163,7 @@ const Modal = React.forwardRef(({
             </motion.div>
           )}
 
-          {/* Enhanced Modal Container */}
+          {/* Modal Container */}
           <motion.div
             ref={modalRef}
             variants={modalVariants}
@@ -216,7 +216,7 @@ const Modal = React.forwardRef(({
 Modal.displayName = 'Modal';
 
 /**
- * Enhanced ModalHeader Component
+ * ModalHeader Component
  */
 const ModalHeader = React.forwardRef(({
   children,
@@ -239,7 +239,7 @@ const ModalHeader = React.forwardRef(({
   >
     {children}
 
-    {/* Enhanced close button */}
+    {/* close button */}
     {showClose && (
       <motion.button
         onClick={onClose}
@@ -262,7 +262,7 @@ const ModalHeader = React.forwardRef(({
 ModalHeader.displayName = 'ModalHeader';
 
 /**
- * Enhanced ModalTitle Component
+ * ModalTitle Component
  */
 const ModalTitle = React.forwardRef(({
   children,
@@ -288,7 +288,7 @@ const ModalTitle = React.forwardRef(({
 ModalTitle.displayName = 'ModalTitle';
 
 /**
- * Enhanced ModalDescription Component
+ * ModalDescription Component
  */
 const ModalDescription = React.forwardRef(({
   children,
@@ -313,7 +313,7 @@ const ModalDescription = React.forwardRef(({
 ModalDescription.displayName = 'ModalDescription';
 
 /**
- * Enhanced ModalBody Component
+ * ModalBody Component
  */
 const ModalBody = React.forwardRef(({
   children,
@@ -346,7 +346,7 @@ const ModalBody = React.forwardRef(({
 ModalBody.displayName = 'ModalBody';
 
 /**
- * Enhanced ModalFooter Component
+ * ModalFooter Component
  */
 const ModalFooter = React.forwardRef(({
   children,

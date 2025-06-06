@@ -5,20 +5,20 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { cn } from '../../utils/cn';
 
 /**
- * Enhanced ThemeToggle Component - Advanced theme switching with sophisticated animations
+ * ThemeToggle Component - Advanced theme switching with sophisticated animations
  *
- * Enhanced Features:
+ * Features:
  * - Dynamic icon transitions with contextual animations
  * - Sophisticated glassmorphism with theme-aware styling
  * - Advanced particle effects during theme transitions
- * - Enhanced micro-interactions with haptic-style feedback
+ * - micro-interactions with haptic-style feedback
  * - Smooth color transitions with ambient lighting effects
  * - Improved accessibility with better visual feedback
  */
 const ThemeToggle = ({ className, size = 'md', showLabel = false }) => {
   const { theme, toggleTheme } = useTheme();
 
-  // Enhanced size configurations
+  // size configurations
   const sizeClasses = {
     sm: {
       button: 'p-2',
@@ -39,7 +39,7 @@ const ThemeToggle = ({ className, size = 'md', showLabel = false }) => {
 
   const currentSize = sizeClasses[size];
 
-  // Enhanced icon mapping with contextual variants
+  // icon mapping with contextual variants
   const getThemeIcon = () => {
     if (theme === 'dark') {
       return {
@@ -61,7 +61,7 @@ const ThemeToggle = ({ className, size = 'md', showLabel = false }) => {
   const MainIcon = iconConfig.main;
   const AccentIcon = iconConfig.accent;
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const buttonVariants = {
     initial: { scale: 1 },
     hover: {
@@ -157,7 +157,7 @@ const ThemeToggle = ({ className, size = 'md', showLabel = false }) => {
         className={cn(
           "relative rounded-xl border transition-all duration-300 overflow-hidden",
           currentSize.button,
-          // Enhanced glassmorphism with theme awareness
+          // glassmorphism with theme awareness
           theme === 'dark'
             ? "bg-gradient-to-r from-slate-800/90 via-slate-700/80 to-slate-800/90 border-slate-600/50 hover:border-blue-400/50"
             : "bg-gradient-to-r from-amber-50/90 via-yellow-50/80 to-amber-50/90 border-amber-200/50 hover:border-amber-400/50",

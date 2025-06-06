@@ -11,14 +11,14 @@ import Badge from '../ui/Badge';
 import { CollectionSidebarToggle } from '../ui/CollectionSidebar';
 
 /**
- * Enhanced WishlistToolbar Component - Top toolbar for wishlist management
+ * WishlistToolbar Component - Top toolbar for wishlist management
  *
- * Enhanced Features:
+ * Features:
  * - Advanced glassmorphism with multi-layer backdrop effects
  * - Sophisticated micro-animations for all interactive elements
- * - Improved visual hierarchy with enhanced spacing and typography
+ * - Improved visual hierarchy with spacing and typography
  * - Staggered animation sequences for better user experience
- * - Enhanced color transitions and hover states
+ * - color transitions and hover states
  * - Real-time visual feedback for all user interactions
  */
 const WishlistToolbar = React.forwardRef(({
@@ -43,7 +43,7 @@ const WishlistToolbar = React.forwardRef(({
   // Count active filters
   const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
 
-  // Enhanced mode configurations with improved styling
+  // mode configurations with improved styling
   const modes = {
     view: {
       label: 'View',
@@ -88,7 +88,7 @@ const WishlistToolbar = React.forwardRef(({
     }
   };
 
-  // Enhanced search handlers
+  // search handlers
   const handleSearchChange = (e) => {
     onSearchChange?.(e.target.value);
   };
@@ -100,7 +100,7 @@ const WishlistToolbar = React.forwardRef(({
   const handleSearchFocus = () => setSearchFocused(true);
   const handleSearchBlur = () => setSearchFocused(false);
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const toolbarVariants = {
     initial: { opacity: 0, y: -20, scale: 0.98 },
     animate: {
@@ -244,7 +244,7 @@ const WishlistToolbar = React.forwardRef(({
       ref={ref}
       className={cn(
         'sticky top-0 z-30 overflow-hidden',
-        // Enhanced glassmorphism with multiple layers
+        // glassmorphism with multiple layers
         'bg-gradient-to-r from-background/85 via-background/90 to-background/85',
         'backdrop-blur-xl backdrop-saturate-150',
         'border-b border-gradient-to-r from-border/20 via-border/40 to-border/20',
@@ -265,7 +265,7 @@ const WishlistToolbar = React.forwardRef(({
         <div className="flex items-center justify-between gap-responsive-md">
           {/* Left Section: Sidebar Toggle + Search */}
           <div className="flex items-center gap-responsive-md flex-1 min-w-0">
-            {/* Enhanced Mobile sidebar toggle */}
+            {/* Mobile sidebar toggle */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -277,7 +277,7 @@ const WishlistToolbar = React.forwardRef(({
               />
             </motion.div>
 
-            {/* Enhanced Search with real-time visual feedback */}
+            {/* Search with real-time visual feedback */}
             <motion.div 
               className="flex-1 max-w-md relative"
               variants={searchVariants}
@@ -323,9 +323,9 @@ const WishlistToolbar = React.forwardRef(({
             </motion.div>
           </div>
 
-          {/* Right Section: Enhanced Mode Buttons + Actions */}
+          {/* Right Section: Mode Buttons + Actions */}
           <div className="flex items-center gap-responsive-sm">
-            {/* Enhanced Mode Buttons with staggered animations */}
+            {/* Mode Buttons with staggered animations */}
             <div className="hidden md:flex items-center gap-responsive-xs">
               {Object.entries(modes).map(([mode, config], index) => {
                 const isActive = currentMode === mode;
@@ -384,7 +384,7 @@ const WishlistToolbar = React.forwardRef(({
               })}
             </div>
 
-            {/* Enhanced Mobile mode dropdown */}
+            {/* Mobile mode dropdown */}
             <motion.div 
               className="md:hidden"
               initial={{ scale: 0.8, opacity: 0 }}
@@ -400,7 +400,7 @@ const WishlistToolbar = React.forwardRef(({
               </Button>
             </motion.div>
 
-            {/* Enhanced Filter Button with animated badge */}
+            {/* Filter Button with animated badge */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -446,7 +446,7 @@ const WishlistToolbar = React.forwardRef(({
               </Button>
             </motion.div>
 
-            {/* Enhanced Add Item Button with sparkle effect */}
+            {/* Add Item Button with sparkle effect */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -497,7 +497,7 @@ const WishlistToolbar = React.forwardRef(({
           </div>
         </div>
 
-        {/* Enhanced Bulk Actions Bar with staggered animations */}
+        {/* Bulk Actions Bar with staggered animations */}
         <AnimatePresence>
           {currentMode === 'select' && selectedItems.length > 0 && (
             <motion.div
@@ -529,7 +529,7 @@ const WishlistToolbar = React.forwardRef(({
               />
 
               <div className="flex items-center justify-between relative z-10">
-                {/* Enhanced Selection Info */}
+                {/* Selection Info */}
                 <motion.div
                   className="flex items-center gap-responsive-sm"
                   variants={bulkActionItemVariants}
@@ -553,7 +553,7 @@ const WishlistToolbar = React.forwardRef(({
                   </span>
                 </motion.div>
 
-                {/* Enhanced Bulk Actions with staggered animations */}
+                {/* Bulk Actions with staggered animations */}
                 <motion.div 
                   className="flex items-center gap-responsive-sm"
                   variants={bulkActionItemVariants}
@@ -584,7 +584,7 @@ const WishlistToolbar = React.forwardRef(({
                     </motion.div>
                   ))}
 
-                  {/* Enhanced Clear Selection */}
+                  {/* Clear Selection */}
                   <motion.div
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -608,7 +608,7 @@ const WishlistToolbar = React.forwardRef(({
           )}
         </AnimatePresence>
 
-        {/* Enhanced Filter Panel with sophisticated animations */}
+        {/* Filter Panel with sophisticated animations */}
         <AnimatePresence>
           {showFilters && (
             <motion.div
@@ -647,7 +647,7 @@ const WishlistToolbar = React.forwardRef(({
                   </motion.div>
                 </motion.div>
 
-                {/* Enhanced Filter Controls with staggered animations */}
+                {/* Filter Controls with staggered animations */}
                 <motion.div 
                   className="grid grid-cols-1 md:grid-cols-3 gap-responsive-md"
                   variants={filterItemVariants}
@@ -726,7 +726,7 @@ const WishlistToolbar = React.forwardRef(({
                   ))}
                 </motion.div>
 
-                {/* Enhanced Clear Filters with animation */}
+                {/* Clear Filters with animation */}
                 <AnimatePresence>
                   {activeFilterCount > 0 && (
                     <motion.div

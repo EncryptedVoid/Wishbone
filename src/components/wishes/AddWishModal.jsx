@@ -16,15 +16,15 @@ import TagChip, { TagGroup } from './TagChip';
 import { mockCategories, mockCollections } from '../data/mockData';
 
 /**
- * Enhanced AddWishModal Component - Modal for adding new wish items with advanced UX
+ * AddWishModal Component - Modal for adding new wish items with advanced UX
  *
- * Enhanced Features:
+ * Features:
  * - Progressive disclosure with animated section reveals
  * - Sophisticated form validation with real-time visual feedback
- * - Enhanced drag-and-drop interface with visual state indicators
+ * - drag-and-drop interface with visual state indicators
  * - Advanced micro-interactions for all form elements
  * - Contextual animations that guide user attention
- * - Improved visual hierarchy with enhanced spacing and typography
+ * - Improved visual hierarchy with spacing and typography
  * - Smart form flow with contextual help and guidance
  * - Advanced loading states with meaningful progress indicators
  */
@@ -36,7 +36,7 @@ const AddWishModal = React.forwardRef(({
   ...props
 }, ref) => {
 
-  // Enhanced form state management
+  // form state management
   const [formData, setFormData] = useState({
     name: '',
     link: '',
@@ -56,7 +56,7 @@ const AddWishModal = React.forwardRef(({
   const [urlExtracting, setUrlExtracting] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState({});
 
-  // Enhanced form progression logic
+  // form progression logic
   const totalSteps = 4;
   const stepTitles = [
     'Basic Information',
@@ -113,7 +113,7 @@ const AddWishModal = React.forwardRef(({
     setValidationSuccess(newSuccess);
   };
 
-  // Enhanced input handlers with validation
+  // input handlers with validation
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     validateField(field, value);
@@ -136,7 +136,7 @@ const AddWishModal = React.forwardRef(({
     }
   };
 
-  // Enhanced image upload with drag and drop
+  // image upload with drag and drop
   const handleImageUpload = (file) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -165,7 +165,7 @@ const AddWishModal = React.forwardRef(({
     handleImageUpload(file);
   };
 
-  // Enhanced tag management
+  // tag management
   const handleAddTag = (tag) => {
     if (!formData.categoryTags.includes(tag)) {
       handleInputChange('categoryTags', [...formData.categoryTags, tag]);
@@ -176,7 +176,7 @@ const AddWishModal = React.forwardRef(({
     handleInputChange('categoryTags', formData.categoryTags.filter(t => t !== tag));
   };
 
-  // Enhanced form validation
+  // form validation
   const validateForm = () => {
     const newErrors = {};
 
@@ -192,7 +192,7 @@ const AddWishModal = React.forwardRef(({
     return Object.keys(newErrors).length === 0;
   };
 
-  // Enhanced save handler
+  // save handler
   const handleSave = async () => {
     if (!validateForm()) return;
 
@@ -215,7 +215,7 @@ const AddWishModal = React.forwardRef(({
     }
   };
 
-  // Enhanced close handler
+  // close handler
   const handleClose = () => {
     setFormData({
       name: '',
@@ -244,7 +244,7 @@ const AddWishModal = React.forwardRef(({
     }
   };
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const modalVariants = {
     initial: { opacity: 0, scale: 0.9, y: 20 },
     animate: {
@@ -308,7 +308,7 @@ const AddWishModal = React.forwardRef(({
     }
   };
 
-  // Enhanced form field component
+  // form field component
   const FormField = ({ label, error, success, required = false, children, description }) => (
     <motion.div variants={fieldVariants} className="space-y-2">
       <div className="flex items-center justify-between">
@@ -364,7 +364,7 @@ const AddWishModal = React.forwardRef(({
         animate="animate"
         exit="exit"
       >
-        {/* Enhanced Header with Progress */}
+        {/* Header with Progress */}
         <ModalHeader className="relative overflow-hidden">
           <div className="flex items-center justify-between">
             <div>
@@ -530,7 +530,7 @@ const AddWishModal = React.forwardRef(({
                       whileFocus={{ scale: 1.02 }}
                     />
 
-                    {/* Enhanced Drag and Drop Upload */}
+                    {/* Drag and Drop Upload */}
                     <motion.div
                       className={cn(
                         'relative border-2 border-dashed rounded-xl p-8 text-center transition-all duration-300',

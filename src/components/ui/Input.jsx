@@ -4,7 +4,7 @@ import { AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 /**
- * Enhanced Input Component for EyeWantIt
+ * Input Component for EyeWantIt
  *
  * Features:
  * - Proper keyboard navigation support

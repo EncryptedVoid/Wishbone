@@ -10,13 +10,13 @@ import { useTheme } from '../../contexts/ThemeContext';
  * EyeWantIt Features Section Router
  *
  * Smart component that renders the appropriate features experience
- * based on device type with enhanced loading states
+ * based on device type with loading states
  */
 function Features() {
   const { isMobile, isLoading } = useIsMobile();
   const { theme, isLoading: themeLoading } = useTheme();
 
-  // Enhanced loading state for features section
+  // loading state for features section
   if (isLoading || themeLoading) {
     return (
       <motion.div

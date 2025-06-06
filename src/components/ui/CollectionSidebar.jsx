@@ -6,14 +6,14 @@ import Button from './Button';
 import Badge from './Badge';
 
 /**
- * Enhanced CollectionSidebar Component - Advanced navigation sidebar with sophisticated animations
+ * CollectionSidebar Component - Advanced navigation sidebar with sophisticated animations
  *
- * Enhanced Features:
+ * Features:
  * - Advanced glassmorphism with multi-layer backdrop effects
  * - Sophisticated collection item animations with staggered reveals
- * - Enhanced hover states with elevation and glow effects
+ * - hover states with elevation and glow effects
  * - Dynamic badges with contextual styling and animations
- * - Improved visual hierarchy with enhanced spacing and typography
+ * - Improved visual hierarchy with spacing and typography
  * - Smart collection organization with visual priority indicators
  * - Advanced mobile responsiveness with gesture support
  */
@@ -28,7 +28,7 @@ const CollectionSidebar = React.forwardRef(({
   ...props
 }, ref) => {
 
-  // Enhanced collection selection with sophisticated feedback
+  // collection selection with sophisticated feedback
   const handleCollectionSelect = (collectionId) => {
     onCollectionChange?.(collectionId);
     // Auto-close on mobile with improved timing
@@ -37,7 +37,7 @@ const CollectionSidebar = React.forwardRef(({
     }
   };
 
-  // Calculate collection statistics for enhanced display
+  // Calculate collection statistics for display
   const totalItems = collections.reduce((total, col) => total + col.itemCount, 0);
   const getCollectionPriority = (collection) => {
     if (collection.itemCount === 0) return 'empty';
@@ -46,7 +46,7 @@ const CollectionSidebar = React.forwardRef(({
     return 'low';
   };
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const sidebarVariants = {
     hidden: {
       x: -320,
@@ -171,7 +171,7 @@ const CollectionSidebar = React.forwardRef(({
 
   return (
     <>
-      {/* Enhanced Mobile backdrop with blur effect */}
+      {/* Mobile backdrop with blur effect */}
       {isOpen && window.innerWidth < 1024 && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -183,7 +183,7 @@ const CollectionSidebar = React.forwardRef(({
         />
       )}
 
-      {/* Enhanced Sidebar */}
+      {/* Sidebar */}
       <motion.aside
         ref={ref}
         variants={sidebarVariants}
@@ -194,7 +194,7 @@ const CollectionSidebar = React.forwardRef(({
           // Base positioning and sizing
           'fixed lg:static inset-y-0 left-0 z-50',
           'w-72 h-full flex flex-col',
-          // Enhanced glassmorphism
+          // glassmorphism
           'bg-gradient-to-b from-background/95 via-background/90 to-surface/95',
           'backdrop-blur-xl border-r border-border/50',
           'shadow-2xl lg:shadow-xl',
@@ -205,7 +205,7 @@ const CollectionSidebar = React.forwardRef(({
         )}
         {...props}
       >
-        {/* Enhanced Header */}
+        {/* Header */}
         <motion.div
           className="p-responsive-lg border-b border-border/50 relative z-10"
           variants={headerVariants}
@@ -232,7 +232,7 @@ const CollectionSidebar = React.forwardRef(({
               </h2>
             </div>
 
-            {/* Enhanced Add Collection Button */}
+            {/* Add Collection Button */}
             <motion.div
               whileHover={{ scale: 1.05, rotate: 180 }}
               whileTap={{ scale: 0.95 }}
@@ -262,7 +262,7 @@ const CollectionSidebar = React.forwardRef(({
             </motion.div>
           </div>
 
-          {/* Enhanced subtitle with statistics */}
+          {/* subtitle with statistics */}
           <motion.p
             className="text-responsive-xs text-muted mt-2 flex items-center gap-2"
             initial={{ opacity: 0 }}
@@ -274,7 +274,7 @@ const CollectionSidebar = React.forwardRef(({
           </motion.p>
         </motion.div>
 
-        {/* Enhanced Collections List */}
+        {/* Collections List */}
         <motion.nav
           className="flex-1 overflow-y-auto p-responsive-md space-y-1 relative z-10"
           variants={containerVariants}
@@ -299,7 +299,7 @@ const CollectionSidebar = React.forwardRef(({
                   'p-3 rounded-xl text-left group relative overflow-hidden',
                   'transition-all duration-300 backdrop-blur-sm',
 
-                  // Active state with enhanced styling
+                  // Active state with styling
                   isActive ? [
                     'bg-gradient-to-r from-primary-100 via-primary-50 to-primary-100',
                     'text-primary-700 border border-primary-200/80',
@@ -315,7 +315,7 @@ const CollectionSidebar = React.forwardRef(({
               >
                 {/* Left side: Icon, Emoji, and Name */}
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {/* Collection emoji/icon with enhanced animation */}
+                  {/* Collection emoji/icon with animation */}
                   {collection.icon ? (
                     <motion.span
                       className="text-responsive-lg flex-shrink-0"
@@ -362,7 +362,7 @@ const CollectionSidebar = React.forwardRef(({
                   </div>
                 </div>
 
-                {/* Enhanced Right side: Item count with priority styling */}
+                {/* Right side: Item count with priority styling */}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   {/* High activity indicator */}
                   {priority === 'high' && (
@@ -414,7 +414,7 @@ const CollectionSidebar = React.forwardRef(({
           })}
         </motion.nav>
 
-        {/* Enhanced Footer with statistics and sparkle effect */}
+        {/* Footer with statistics and sparkle effect */}
         <motion.div
           className="p-responsive-md border-t border-border/50 relative z-10"
           variants={footerVariants}
@@ -460,7 +460,7 @@ const CollectionSidebar = React.forwardRef(({
 CollectionSidebar.displayName = 'CollectionSidebar';
 
 /**
- * Enhanced CollectionSidebarToggle - Button to toggle sidebar with improved animations
+ * CollectionSidebarToggle - Button to toggle sidebar with improved animations
  */
 const CollectionSidebarToggle = React.forwardRef(({
   isOpen,

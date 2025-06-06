@@ -4,7 +4,7 @@ import { Palette, Check, Sparkles, Droplets, Flame, Leaf, Heart, Gem, Moon, Sun 
 import { useTheme } from '../../contexts/ThemeContext';
 import { cn } from '../../utils/cn';
 
-// Enhanced color options with creative names and icons
+// color options with creative names and icons
 const colorOptions = [
   {
     id: 'blue',
@@ -73,13 +73,13 @@ const colorOptions = [
 ];
 
 /**
- * Enhanced ColorThemeSelector Component - Advanced color theme selection with creative naming
+ * ColorThemeSelector Component - Advanced color theme selection with creative naming
  *
- * Enhanced Features:
+ * Features:
  * - Creative color names with contextual descriptions
  * - Sophisticated glassmorphism with theme-aware styling
  * - Advanced color preview with gradient backgrounds
- * - Enhanced micro-interactions with particle effects
+ * - micro-interactions with particle effects
  * - Contextual icons for each color theme
  * - Improved accessibility with better visual feedback
  * - Staggered animations for color options
@@ -116,7 +116,7 @@ const ColorThemeSelector = ({ className, size = 'md', layout = 'grid' }) => {
   const currentSize = sizeClasses[size];
   const currentColor = colorOptions.find(color => color.id === colorTheme);
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const buttonVariants = {
     initial: { scale: 1 },
     hover: {
@@ -230,7 +230,7 @@ const ColorThemeSelector = ({ className, size = 'md', layout = 'grid' }) => {
 
   return (
     <div className={cn("relative", className)}>
-      {/* Enhanced trigger button */}
+      {/* trigger button */}
       <motion.button
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
@@ -283,7 +283,7 @@ const ColorThemeSelector = ({ className, size = 'md', layout = 'grid' }) => {
         />
       </motion.button>
 
-      {/* Enhanced dropdown */}
+      {/* dropdown */}
       <AnimatePresence>
         {isOpen && (
           <>
@@ -364,7 +364,7 @@ const ColorThemeSelector = ({ className, size = 'md', layout = 'grid' }) => {
                       whileTap="tap"
                       custom={index}
                     >
-                      {/* Color preview with enhanced styling */}
+                      {/* Color preview with styling */}
                       <div className="relative flex-shrink-0">
                         <motion.div
                           className={cn(

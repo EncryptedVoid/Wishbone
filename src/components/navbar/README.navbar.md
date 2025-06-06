@@ -133,7 +133,7 @@ For unauthenticated users, you typically only add buttons to the right side:
 {user ? (
   /* User content */
 ) : (
-  /* Enhanced Auth Buttons */
+  /* Auth Buttons */
   <div className="flex items-center space-x-responsive-sm">
     <Button
       variant="ghost"

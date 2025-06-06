@@ -12,6 +12,7 @@ import { default as Home } from './pages/Home'
 import { default as Dashboard } from './pages/Dashboard'
 import { default as Memoirs } from './pages/Memoirs'
 import { default as Wishlist } from './pages/Wishlist'
+import { default as TestWishlist } from './pages/Wishlist/TestWishlist'
 import { default as Events } from './pages/Events'
 import { default as Friends } from './pages/Friends'
 import { default as Settings } from './pages/Settings'
@@ -39,6 +40,7 @@ function App() {
         <Route path="/wishlist" element={
           <ProtectedRoute>
             <Wishlist />
+            {/* <TestWishlist /> */}
           </ProtectedRoute>
         } />
         <Route path="/events" element={

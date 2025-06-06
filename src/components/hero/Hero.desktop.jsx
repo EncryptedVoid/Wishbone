@@ -91,7 +91,7 @@ const HeroDesktop = () => {
           transition={{ duration: 10, repeat: Infinity }}
         />
 
-        {/* Enhanced dot pattern with gradient */}
+        {/* dot pattern with gradient */}
         <div
           className="absolute inset-0 opacity-[0.03] dark:opacity-[0.08]"
           style={{

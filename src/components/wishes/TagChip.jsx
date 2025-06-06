@@ -4,13 +4,13 @@ import { X, Sparkles } from 'lucide-react';
 import { cn } from '../../utils/cn';
 
 /**
- * Enhanced TagChip Component - Professional tag/chip with advanced animations
+ * TagChip Component - Professional tag/chip with advanced animations
  *
- * Enhanced Features:
+ * Features:
  * - Sophisticated gradient backgrounds with dynamic lighting effects
  * - Advanced micro-interactions with haptic-style feedback
  * - Particle effects for premium interactions
- * - Enhanced visual hierarchy with improved typography
+ * - visual hierarchy with improved typography
  * - Smart color transitions based on interaction states
  * - Contextual animations that adapt to usage patterns
  */
@@ -27,7 +27,7 @@ const TagChip = React.forwardRef(({
   ...props
 }, ref) => {
 
-  // Enhanced size configurations with improved scaling
+  // size configurations with improved scaling
   const sizeClasses = {
     sm: {
       container: 'h-7 px-3 text-responsive-xs',
@@ -46,7 +46,7 @@ const TagChip = React.forwardRef(({
     }
   };
 
-  // Enhanced variant styles with sophisticated gradients
+  // variant styles with sophisticated gradients
   const variantClasses = {
     default: selected
       ? 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-500 text-white border-primary-400 shadow-lg shadow-primary-500/25'
@@ -80,7 +80,7 @@ const TagChip = React.forwardRef(({
   const currentSize = sizeClasses[size];
   const isInteractive = clickable || removable;
 
-  // Enhanced base styles
+  // base styles
   const baseClasses = [
     'inline-flex items-center justify-center relative overflow-hidden',
     'rounded-full border font-medium backdrop-blur-sm',
@@ -93,13 +93,13 @@ const TagChip = React.forwardRef(({
     'before:absolute before:inset-0 before:bg-gradient-to-r before:from-white/10 before:via-transparent before:to-white/5 before:pointer-events-none before:rounded-full'
   ].filter(Boolean).join(' ');
 
-  // Handle remove action with enhanced feedback
+  // Handle remove action with feedback
   const handleRemove = (e) => {
     e.stopPropagation();
     onRemove?.();
   };
 
-  // ENHANCED MOTION VARIANTS
+  // MOTION VARIANTS
   const chipVariants = {
     initial: {
       scale: 0.8,
@@ -200,7 +200,7 @@ const TagChip = React.forwardRef(({
       whileTap={clickable ? "tap" : undefined}
       {...props}
     >
-      {/* Enhanced background shimmer effect */}
+      {/* background shimmer effect */}
       <motion.div
         className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0"
         animate={selected ? {
@@ -235,7 +235,7 @@ const TagChip = React.forwardRef(({
         </motion.div>
       )}
 
-      {/* Enhanced Remove Button */}
+      {/* Remove Button */}
       {removable && (
         <motion.button
           type="button"
@@ -270,7 +270,7 @@ const TagChip = React.forwardRef(({
 TagChip.displayName = 'TagChip';
 
 /**
- * Enhanced TagGroup Component - Container for multiple tags with advanced layout
+ * TagGroup Component - Container for multiple tags with advanced layout
  */
 const TagGroup = React.forwardRef(({
   children,
