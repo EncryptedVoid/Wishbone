@@ -7,7 +7,7 @@ import {
   deleteWishlistItem,
   dibsItem,
   undibsItem
-} from '../lib/wishlist';
+} from '../../lib/wishlist';
 
 const WishlistDemo = () => {
   // State for wishlist items
