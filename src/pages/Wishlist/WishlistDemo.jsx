@@ -2,173 +2,470 @@ import React, { useState, useEffect } from 'react';
 import {
   createWishlistItem,
   getMyWishlistItems,
-  getAllWishlistItems,
   updateWishlistItem,
   deleteWishlistItem,
-  dibsItem,
-  undibsItem
-} from '../../lib/wishlist';
+  claimItem,
+  unclaimItem,
+  createCollection,
+  getMyCollections,
+  addItemToCollections,
+  removeItemFromCollections,
+  getDashboardData
+} from '../../lib/wishlistService';
+import { getCurrentUser, isAuthenticated } from '../../lib/authService';
 
 const WishlistDemo = () => {
-  // State for wishlist items
-  const [items, setItems] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [adminMode, setAdminMode] = useState(false);
+  // === STATE MANAGEMENT ===
+  // Authentication state
+  const [user, setUser] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // State for adding new items
+  // Data state
+  const [items, setItems] = useState([]);
+  const [collections, setCollections] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  // UI state
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showCollectionForm, setShowCollectionForm] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  // Form state
   const [newItem, setNewItem] = useState({
     name: '',
     description: '',
     link: '',
     score: 5,
-    is_private: false
+    isPrivate: false,
+    imageUrl: '',
+    collectionIds: []
   });
 
-  // State for editing items
-  const [editingItem, setEditingItem] = useState(null);
+  const [newCollection, setNewCollection] = useState({
+    name: '',
+    description: '',
+    emoji: '📋',
+    color: 'blue'
+  });
+
   const [editForm, setEditForm] = useState({});
 
-  // State for delete confirmation
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-
-  // Load wishlist items when component mounts
+  // === AUTHENTICATION EFFECTS ===
   useEffect(() => {
-    loadWishlist();
-  }, [adminMode]);
+    checkAuthStatus();
+  }, []);
 
-  const loadWishlist = async () => {
-    setLoading(true);
+  useEffect(() => {
+    if (isLoggedIn) {
+      loadDashboardData();
+    }
+  }, [isLoggedIn]);
+
+  // === AUTHENTICATION FUNCTIONS ===
+  const checkAuthStatus = async () => {
     try {
-      const data = adminMode ? await getAllWishlistItems() : await getMyWishlistItems();
-      setItems(data);
+      setAuthLoading(true);
+      const authenticated = await isAuthenticated();
+      setIsLoggedIn(authenticated);
+
+      if (authenticated) {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      }
     } catch (error) {
-      console.error('Error loading wishlist:', error);
+      console.error('Auth check failed:', error);
+      setError('Failed to check authentication status');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  // === DATA LOADING FUNCTIONS ===
+  const loadDashboardData = async () => {
+    if (!isLoggedIn) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const { items: dashboardItems, collections: dashboardCollections } = await getDashboardData();
+      setItems(dashboardItems);
+      setCollections(dashboardCollections);
+
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      setError('Failed to load your wishlist. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle adding new item
+  const refreshData = async () => {
+    await loadDashboardData();
+  };
+
+  // === ITEM MANAGEMENT FUNCTIONS ===
   const handleAddItem = async () => {
-    if (!newItem.name.trim()) return;
+    if (!newItem.name.trim()) {
+      setError('Item name is required');
+      return;
+    }
 
     try {
+      setError(null);
       const createdItem = await createWishlistItem(newItem);
       setItems([createdItem, ...items]);
-      setNewItem({ name: '', description: '', link: '', score: 5, is_private: false });
+
+      // Reset form
+      setNewItem({
+        name: '',
+        description: '',
+        link: '',
+        score: 5,
+        isPrivate: false,
+        imageUrl: '',
+        collectionIds: []
+      });
       setShowAddForm(false);
+
+      // Show success message
+      alert(`Successfully added "${createdItem.name}" to your wishlist!`);
+
     } catch (error) {
       console.error('Error adding item:', error);
+      setError(`Failed to add item: ${error.message}`);
     }
   };
 
-  // Handle editing item
   const startEdit = (item) => {
     setEditingItem(item.id);
-    setEditForm({ ...item });
+    setEditForm({
+      name: item.name,
+      description: item.description,
+      link: item.link,
+      score: item.score,
+      isPrivate: item.is_private,
+      imageUrl: item.image_url,
+      collectionIds: item.collection_ids || []
+    });
   };
 
   const handleEditSubmit = async () => {
+    if (!editForm.name?.trim()) {
+      setError('Item name is required');
+      return;
+    }
+
     try {
+      setError(null);
       const updatedItem = await updateWishlistItem(editingItem, editForm);
       setItems(items.map(item => item.id === editingItem ? updatedItem : item));
       setEditingItem(null);
       setEditForm({});
+
+      alert('Item updated successfully!');
+
     } catch (error) {
       console.error('Error updating item:', error);
+      setError(`Failed to update item: ${error.message}`);
     }
   };
 
   const cancelEdit = () => {
     setEditingItem(null);
     setEditForm({});
+    setError(null);
   };
 
-  // Handle deleting item
   const handleDelete = async (id) => {
     try {
+      setError(null);
       await deleteWishlistItem(id);
       setItems(items.filter(item => item.id !== id));
       setDeleteConfirm(null);
+
+      alert('Item deleted successfully!');
+
     } catch (error) {
       console.error('Error deleting item:', error);
+      setError(`Failed to delete item: ${error.message}`);
     }
   };
 
-  // Handle dibs
-  const handleDibs = async (id) => {
+  // === DIBS/CLAIMING FUNCTIONS ===
+  const handleClaim = async (id) => {
     try {
-      const updatedItem = await dibsItem(id);
+      setError(null);
+      const updatedItem = await claimItem(id);
       setItems(items.map(item => item.id === id ? updatedItem : item));
+
+      alert(`You've claimed "${updatedItem.name}"!`);
+
     } catch (error) {
-      console.error('Error dibbing item:', error);
+      console.error('Error claiming item:', error);
+      setError(`Failed to claim item: ${error.message}`);
     }
   };
 
-  const handleUndibs = async (id) => {
+  const handleUnclaim = async (id) => {
     try {
-      const updatedItem = await undibsItem(id);
+      setError(null);
+      const updatedItem = await unclaimItem(id);
       setItems(items.map(item => item.id === id ? updatedItem : item));
+
+      alert('Claim removed successfully!');
+
     } catch (error) {
-      console.error('Error removing dibs:', error);
+      console.error('Error removing claim:', error);
+      setError(`Failed to remove claim: ${error.message}`);
     }
   };
 
-  if (loading) {
+  // === COLLECTION MANAGEMENT FUNCTIONS ===
+  const handleAddCollection = async () => {
+    if (!newCollection.name.trim()) {
+      setError('Collection name is required');
+      return;
+    }
+
+    try {
+      setError(null);
+      const createdCollection = await createCollection(newCollection);
+      setCollections([createdCollection, ...collections]);
+
+      // Reset form
+      setNewCollection({
+        name: '',
+        description: '',
+        emoji: '📋',
+        color: 'blue'
+      });
+      setShowCollectionForm(false);
+
+      alert(`Collection "${createdCollection.name}" created successfully!`);
+
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      setError(`Failed to create collection: ${error.message}`);
+    }
+  };
+
+  const handleAddToCollection = async (itemId, collectionIds) => {
+    try {
+      setError(null);
+      const updatedItem = await addItemToCollections(itemId, collectionIds);
+      setItems(items.map(item => item.id === itemId ? updatedItem : item));
+
+      // Refresh dashboard to update collection counts
+      await refreshData();
+
+    } catch (error) {
+      console.error('Error adding to collection:', error);
+      setError(`Failed to add to collection: ${error.message}`);
+    }
+  };
+
+  // === LOADING AND ERROR STATES ===
+  if (authLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <div className="text-lg">Loading wishlist...</div>
+        <div className="text-lg">Checking authentication...</div>
       </div>
     );
   }
 
-  return (
-    <div className="max-w-4xl mx-auto p-4 pt-[20rem] mt-[20rem]">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          {adminMode ? 'All Wishlists (Admin View)' : 'My Wishlist'}
-        </h1>
-        <div className="flex gap-2">
+  if (!isLoggedIn) {
+    return (
+      <div className="flex flex-col justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Please Log In</h1>
+          <p className="text-gray-600 mb-4">You need to be logged in to view your wishlist.</p>
           <button
-            onClick={() => setAdminMode(!adminMode)}
-            className={`px-4 py-2 rounded ${
-              adminMode
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-gray-500 text-white hover:bg-gray-600'
-            }`}
+            onClick={() => window.location.href = '/login'}
+            className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
           >
-            {adminMode ? 'Exit Admin' : 'Admin Mode'}
+            Go to Login
           </button>
-          {!adminMode && (
-            <button
-              onClick={() => setShowAddForm(true)}
-              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-            >
-              Add Item
-            </button>
-          )}
         </div>
       </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg">Loading your wishlist...</div>
+      </div>
+    );
+  }
+
+  // === MAIN RENDER ===
+  return (
+    <div className="max-w-6xl mx-auto p-4">
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">My Wishlist</h1>
+          {user && (
+            <p className="text-gray-600">Welcome back, {user.firstName || user.email}!</p>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setShowCollectionForm(true)}
+            className="bg-purple-500 text-white px-4 py-2 rounded hover:bg-purple-600"
+          >
+            Add Collection
+          </button>
+          <button
+            onClick={() => setShowAddForm(true)}
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            Add Item
+          </button>
+          <button
+            onClick={refreshData}
+            className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+          >
+            Refresh
+          </button>
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+          <div className="flex justify-between items-center">
+            <span>{error}</span>
+            <button
+              onClick={() => setError(null)}
+              className="text-red-700 hover:text-red-900"
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Collections Summary */}
+      {collections.length > 0 && (
+        <div className="bg-gray-50 rounded-lg p-4 mb-6">
+          <h2 className="text-lg font-semibold mb-2">Your Collections</h2>
+          <div className="flex flex-wrap gap-2">
+            {collections.map((collection) => (
+              <span
+                key={collection.id}
+                className="inline-flex items-center bg-white px-3 py-1 rounded-full text-sm border"
+              >
+                <span className="mr-1">{collection.emoji}</span>
+                {collection.name}
+                <span className="ml-1 text-gray-500">({collection.item_count})</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Add Collection Form */}
+      {showCollectionForm && (
+        <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
+          <h2 className="text-xl font-semibold mb-4">Create New Collection</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Collection Name *
+              </label>
+              <input
+                type="text"
+                value={newCollection.name}
+                onChange={(e) => setNewCollection({ ...newCollection, name: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="e.g., Electronics, Books, etc."
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Emoji
+              </label>
+              <input
+                type="text"
+                value={newCollection.emoji}
+                onChange={(e) => setNewCollection({ ...newCollection, emoji: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="📋"
+                maxLength="2"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              <textarea
+                value={newCollection.description}
+                onChange={(e) => setNewCollection({ ...newCollection, description: e.target.value })}
+                className="w-full p-2 border border-gray-300 rounded"
+                placeholder="What is this collection for?"
+                rows="2"
+              />
+            </div>
+
+            <div className="md:col-span-2 flex gap-2">
+              <button
+                onClick={handleAddCollection}
+                className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+              >
+                Create Collection
+              </button>
+              <button
+                onClick={() => setShowCollectionForm(false)}
+                className="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Item Form */}
       {showAddForm && (
         <div className="bg-white border border-gray-200 rounded-lg p-4 mb-6">
           <h2 className="text-xl font-semibold mb-4">Add New Item</h2>
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Item Name *
-              </label>
-              <input
-                type="text"
-                value={newItem.name}
-                onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="What do you want?"
-                required
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Item Name *
+                </label>
+                <input
+                  type="text"
+                  value={newItem.name}
+                  onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="What do you want?"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Priority Score (1-10)
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={newItem.score}
+                  onChange={(e) => setNewItem({ ...newItem, score: parseInt(e.target.value) })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                />
+              </div>
             </div>
 
             <div>
@@ -184,46 +481,81 @@ const WishlistDemo = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Link
-              </label>
-              <input
-                type="url"
-                value={newItem.link}
-                onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
-                className="w-full p-2 border border-gray-300 rounded"
-                placeholder="https://amazon.com/product..."
-              />
-            </div>
-
-            <div className="flex gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Want Score (1-10)
+                  Link
                 </label>
                 <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={newItem.score}
-                  onChange={(e) => setNewItem({ ...newItem, score: parseInt(e.target.value) })}
-                  className="w-20 p-2 border border-gray-300 rounded"
+                  type="url"
+                  value={newItem.link}
+                  onChange={(e) => setNewItem({ ...newItem, link: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="https://amazon.com/product..."
                 />
               </div>
 
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="private"
-                  checked={newItem.is_private}
-                  onChange={(e) => setNewItem({ ...newItem, is_private: e.target.checked })}
-                  className="mr-2"
-                />
-                <label htmlFor="private" className="text-sm font-medium text-gray-700">
-                  Private Item
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Image URL
                 </label>
+                <input
+                  type="url"
+                  value={newItem.imageUrl}
+                  onChange={(e) => setNewItem({ ...newItem, imageUrl: e.target.value })}
+                  className="w-full p-2 border border-gray-300 rounded"
+                  placeholder="https://example.com/image.jpg"
+                />
               </div>
+            </div>
+
+            {/* Collections Selection */}
+            {collections.length > 0 && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Add to Collections
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {collections.map((collection) => (
+                    <label key={collection.id} className="flex items-center">
+                      <input
+                        type="checkbox"
+                        checked={newItem.collectionIds.includes(collection.id)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setNewItem({
+                              ...newItem,
+                              collectionIds: [...newItem.collectionIds, collection.id]
+                            });
+                          } else {
+                            setNewItem({
+                              ...newItem,
+                              collectionIds: newItem.collectionIds.filter(id => id !== collection.id)
+                            });
+                          }
+                        }}
+                        className="mr-2"
+                      />
+                      <span className="text-sm">
+                        {collection.emoji} {collection.name}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="private"
+                checked={newItem.isPrivate}
+                onChange={(e) => setNewItem({ ...newItem, isPrivate: e.target.checked })}
+                className="mr-2"
+              />
+              <label htmlFor="private" className="text-sm font-medium text-gray-700">
+                Private Item (only you can see it)
+              </label>
             </div>
 
             <div className="flex gap-2">
@@ -251,6 +583,7 @@ const WishlistDemo = () => {
             <h3 className="text-lg font-semibold mb-2">Delete Item</h3>
             <p className="text-gray-600 mb-4">
               Are you sure you want to delete "{items.find(item => item.id === deleteConfirm)?.name}"?
+              This action cannot be undone.
             </p>
             <div className="flex gap-2 justify-end">
               <button
@@ -274,10 +607,17 @@ const WishlistDemo = () => {
       <div className="space-y-4">
         {items.length === 0 ? (
           <div className="text-center py-8">
-            <p className="text-gray-500 text-lg">No items in wishlist yet</p>
-            {!adminMode && (
-              <p className="text-gray-400">Click "Add Item" to get started!</p>
-            )}
+            <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🎁</span>
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No items in your wishlist yet</h3>
+            <p className="text-gray-500 mb-4">Start building your wishlist by adding items you want!</p>
+            <button
+              onClick={() => setShowAddForm(true)}
+              className="bg-blue-500 text-white px-6 py-2 rounded hover:bg-blue-600"
+            >
+              Add Your First Item
+            </button>
           </div>
         ) : (
           items.map((item) => (
@@ -317,18 +657,24 @@ const WishlistDemo = () => {
                     <label className="flex items-center">
                       <input
                         type="checkbox"
-                        checked={editForm.is_private}
-                        onChange={(e) => setEditForm({ ...editForm, is_private: e.target.checked })}
+                        checked={editForm.isPrivate}
+                        onChange={(e) => setEditForm({ ...editForm, isPrivate: e.target.checked })}
                         className="mr-2"
                       />
                       Private
                     </label>
                   </div>
                   <div className="flex gap-2">
-                    <button onClick={handleEditSubmit} className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">
+                    <button
+                      onClick={handleEditSubmit}
+                      className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
+                    >
                       Save
                     </button>
-                    <button onClick={cancelEdit} className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">
+                    <button
+                      onClick={cancelEdit}
+                      className="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600"
+                    >
                       Cancel
                     </button>
                   </div>
@@ -339,11 +685,25 @@ const WishlistDemo = () => {
                   <div className="flex justify-between items-start mb-2">
                     <div className="flex-1">
                       <h3 className="text-lg font-semibold text-gray-800">{item.name}</h3>
-                      {adminMode && item.user && (
-                        <p className="text-sm text-gray-500">User: {item.user.email}</p>
-                      )}
                       {item.description && (
                         <p className="text-gray-600 mt-1">{item.description}</p>
+                      )}
+
+                      {/* Collections */}
+                      {item.collection_ids && item.collection_ids.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-2">
+                          {item.collection_ids.map((collectionId) => {
+                            const collection = collections.find(c => c.id === collectionId);
+                            return collection ? (
+                              <span
+                                key={collectionId}
+                                className="inline-flex items-center bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs"
+                              >
+                                {collection.emoji} {collection.name}
+                              </span>
+                            ) : null;
+                          })}
+                        </div>
                       )}
                     </div>
 
@@ -357,12 +717,17 @@ const WishlistDemo = () => {
                   <div className="flex gap-2 mb-3">
                     {item.is_private && (
                       <span className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
-                        Private
+                        🔒 Private
                       </span>
                     )}
                     {item.dibbed_by && (
                       <span className="bg-orange-200 text-orange-700 px-2 py-1 rounded text-xs">
-                        Dibbed {adminMode && item.dibbed_user && `by ${item.dibbed_user.email}`}
+                        🎯 Claimed
+                      </span>
+                    )}
+                    {item.image_url && (
+                      <span className="bg-green-200 text-green-700 px-2 py-1 rounded text-xs">
+                        📷 Has Image
                       </span>
                     )}
                   </div>
@@ -380,36 +745,33 @@ const WishlistDemo = () => {
                       </a>
                     )}
 
-                    {!adminMode && (
-                      <>
-                        <button
-                          onClick={() => startEdit(item)}
-                          className="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirm(item.id)}
-                          className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
-                        >
-                          Delete
-                        </button>
-                      </>
-                    )}
+                    <button
+                      onClick={() => startEdit(item)}
+                      className="bg-yellow-500 text-white px-3 py-1 rounded text-sm hover:bg-yellow-600"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => setDeleteConfirm(item.id)}
+                      className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600"
+                    >
+                      Delete
+                    </button>
 
                     {!item.dibbed_by ? (
                       <button
-                        onClick={() => handleDibs(item.id)}
+                        onClick={() => handleClaim(item.id)}
                         className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600"
                       >
-                        Dibs!
+                        Claim It!
                       </button>
                     ) : (
                       <button
-                        onClick={() => handleUndibs(item.id)}
+                        onClick={() => handleUnclaim(item.id)}
                         className="bg-orange-500 text-white px-3 py-1 rounded text-sm hover:bg-orange-600"
                       >
-                        Remove Dibs
+                        Remove Claim
                       </button>
                     )}
                   </div>
@@ -417,8 +779,11 @@ const WishlistDemo = () => {
                   {/* Timestamps */}
                   <div className="text-xs text-gray-400 mt-2">
                     Created: {new Date(item.created_at).toLocaleDateString()}
+                    {item.updated_at !== item.created_at && (
+                      <span> • Updated: {new Date(item.updated_at).toLocaleDateString()}</span>
+                    )}
                     {item.dibbed_at && (
-                      <span> • Dibbed: {new Date(item.dibbed_at).toLocaleDateString()}</span>
+                      <span> • Claimed: {new Date(item.dibbed_at).toLocaleDateString()}</span>
                     )}
                   </div>
                 </div>
