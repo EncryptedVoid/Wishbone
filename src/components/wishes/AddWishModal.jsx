@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, Upload, X, Check, AlertCircle, Sparkles, Heart, Image as ImageIcon } from 'lucide-react';
+import { Link, Upload, X, Check, AlertCircle, Sparkles, Heart } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import {
   Modal,
@@ -13,30 +13,17 @@ import {
 import Button from '../ui/Button';
 import DesireScoreDisplay from './DesireScoreDisplay';
 import TagChip, { TagGroup } from './TagChip';
-import { mockCategories, mockCollections } from '../data/mockData';
 
-/**
- * AddWishModal Component - Modal for adding new wish items with advanced UX
- *
- * Features:
- * - Progressive disclosure with animated section reveals
- * - Sophisticated form validation with real-time visual feedback
- * - drag-and-drop interface with visual state indicators
- * - Advanced micro-interactions for all form elements
- * - Contextual animations that guide user attention
- * - Improved visual hierarchy with spacing and typography
- * - Smart form flow with contextual help and guidance
- * - Advanced loading states with meaningful progress indicators
- */
 const AddWishModal = React.forwardRef(({
   isOpen = false,
   onClose,
   onSave,
   defaultCollection = 'all',
+  collections = [], // Now passed from parent with real data
   ...props
 }, ref) => {
 
-  // form state management
+  // Form state management
   const [formData, setFormData] = useState({
     name: '',
     link: '',
@@ -56,7 +43,13 @@ const AddWishModal = React.forwardRef(({
   const [urlExtracting, setUrlExtracting] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState({});
 
-  // form progression logic
+  // Common category tags (could be fetched from your service)
+  const commonTags = [
+    'Electronics', 'Fashion', 'Books', 'Home & Garden', 'Sports', 'Music',
+    'Games', 'Art', 'Kitchen', 'Travel', 'Health', 'Beauty', 'Toys'
+  ];
+
+  // Form progression logic
   const totalSteps = 4;
   const stepTitles = [
     'Basic Information',
@@ -113,7 +106,7 @@ const AddWishModal = React.forwardRef(({
     setValidationSuccess(newSuccess);
   };
 
-  // input handlers with validation
+  // Input handlers with validation
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     validateField(field, value);
@@ -127,6 +120,7 @@ const AddWishModal = React.forwardRef(({
       try {
         // Simulate metadata extraction
         await new Promise(resolve => setTimeout(resolve, 1500));
+        // TODO: Implement actual metadata extraction
         console.log('TODO: Extract metadata from:', url);
       } catch (error) {
         console.error('Failed to extract metadata:', error);
@@ -136,7 +130,7 @@ const AddWishModal = React.forwardRef(({
     }
   };
 
-  // image upload with drag and drop
+  // Image upload with drag and drop
   const handleImageUpload = (file) => {
     if (file && file.type.startsWith('image/')) {
       const reader = new FileReader();
@@ -165,7 +159,7 @@ const AddWishModal = React.forwardRef(({
     handleImageUpload(file);
   };
 
-  // tag management
+  // Tag management
   const handleAddTag = (tag) => {
     if (!formData.categoryTags.includes(tag)) {
       handleInputChange('categoryTags', [...formData.categoryTags, tag]);
@@ -176,7 +170,7 @@ const AddWishModal = React.forwardRef(({
     handleInputChange('categoryTags', formData.categoryTags.filter(t => t !== tag));
   };
 
-  // form validation
+  // Form validation
   const validateForm = () => {
     const newErrors = {};
 
@@ -192,30 +186,39 @@ const AddWishModal = React.forwardRef(({
     return Object.keys(newErrors).length === 0;
   };
 
-  // save handler
+  // Save handler - now calls the service
   const handleSave = async () => {
     if (!validateForm()) return;
 
     setLoading(true);
     try {
+      // Transform form data to match service expectations
       const wishData = {
-        ...formData,
-        id: `wish-${Date.now()}`,
-        dateAdded: new Date(),
-        isDibbed: false,
-        dibbedBy: null
+        name: formData.name,
+        description: formData.description,
+        link: formData.link,
+        score: formData.desireScore,
+        isPrivate: formData.isPrivate,
+        imageUrl: formData.imageUrl,
+        // Only include collection if one is selected
+        collectionIds: formData.collectionId ? [formData.collectionId] : [],
+        // Store category tags in metadata
+        metadata: {
+          categoryTags: formData.categoryTags
+        }
       };
 
       await onSave?.(wishData);
       handleClose();
     } catch (error) {
       console.error('Failed to save wish item:', error);
+      setErrors({ submit: error.message || 'Failed to save item' });
     } finally {
       setLoading(false);
     }
   };
 
-  // close handler
+  // Close handler
   const handleClose = () => {
     setFormData({
       name: '',
@@ -308,7 +311,7 @@ const AddWishModal = React.forwardRef(({
     }
   };
 
-  // form field component
+  // Form field component
   const FormField = ({ label, error, success, required = false, children, description }) => (
     <motion.div variants={fieldVariants} className="space-y-2">
       <div className="flex items-center justify-between">
@@ -416,6 +419,24 @@ const AddWishModal = React.forwardRef(({
         </ModalHeader>
 
         <ModalBody scrollable className="min-h-[400px]">
+          {/* Submit Error Display */}
+          <AnimatePresence>
+            {errors.submit && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
+              >
+                <div className="flex items-center gap-2 text-red-800">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="text-sm font-medium">Error saving item</span>
+                </div>
+                <p className="text-sm text-red-600 mt-1">{errors.submit}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
             {/* Step 1: Basic Information */}
             {currentStep === 1 && (
@@ -713,7 +734,7 @@ const AddWishModal = React.forwardRef(({
                     <div>
                       <p className="text-responsive-xs text-muted mb-2">Choose from popular tags:</p>
                       <TagGroup>
-                        {mockCategories
+                        {commonTags
                           .filter(tag => !formData.categoryTags.includes(tag))
                           .slice(0, 12)
                           .map((tag, index) => (
@@ -755,11 +776,11 @@ const AddWishModal = React.forwardRef(({
                     whileFocus={{ scale: 1.02 }}
                   >
                     <option value="">No specific collection</option>
-                    {mockCollections
-                      .filter(col => !col.isDefault)
+                    {collections
+                      .filter(col => !col.isDefault && col.id !== 'all')
                       .map(collection => (
                         <option key={collection.id} value={collection.id}>
-                          {collection.icon} {collection.name}
+                          {collection.emoji || collection.icon || '📋'} {collection.name}
                         </option>
                       ))}
                   </motion.select>

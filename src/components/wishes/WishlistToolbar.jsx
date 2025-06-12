@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Plus, Edit, Trash2, CheckSquare, Filter,
-  MoreHorizontal, Eye, EyeOff, X, Search, Sparkles
+  MoreHorizontal, Eye, EyeOff, X, Search, Sparkles, TrendingUp
 } from 'lucide-react';
 import { cn } from '../../utils/cn';
 import Button from '../ui/Button';
@@ -10,17 +10,6 @@ import SearchInput from '../ui/SearchInput';
 import Badge from '../ui/Badge';
 import { CollectionSidebarToggle } from '../ui/CollectionSidebar';
 
-/**
- * WishlistToolbar Component - Top toolbar for wishlist management
- *
- * Features:
- * - Advanced glassmorphism with multi-layer backdrop effects
- * - Sophisticated micro-animations for all interactive elements
- * - Improved visual hierarchy with spacing and typography
- * - Staggered animation sequences for better user experience
- * - color transitions and hover states
- * - Real-time visual feedback for all user interactions
- */
 const WishlistToolbar = React.forwardRef(({
   currentMode = 'view',
   onModeChange,
@@ -33,6 +22,8 @@ const WishlistToolbar = React.forwardRef(({
   onAddItem,
   sidebarOpen = false,
   onSidebarToggle,
+  itemCount = 0, // Current filtered item count
+  totalItems = 0, // Total items in wishlist
   className,
   ...props
 }, ref) => {
@@ -41,9 +32,18 @@ const WishlistToolbar = React.forwardRef(({
   const [searchFocused, setSearchFocused] = useState(false);
 
   // Count active filters
-  const activeFilterCount = Object.values(activeFilters).filter(Boolean).length;
+  const activeFilterCount = Object.values(activeFilters).filter(value =>
+    value !== '' && value !== null && value !== undefined
+  ).length;
 
-  // mode configurations with improved styling
+  // Get category options from common categories
+  const categoryOptions = [
+    'Electronics', 'Fashion', 'Books', 'Home & Garden', 'Sports', 'Music',
+    'Games', 'Art', 'Kitchen', 'Travel', 'Health', 'Beauty', 'Toys', 'Jewelry',
+    'Automotive', 'Office', 'Fitness', 'Movies', 'Food', 'Outdoor'
+  ];
+
+  // Mode configurations with improved styling
   const modes = {
     view: {
       label: 'View',
@@ -88,7 +88,7 @@ const WishlistToolbar = React.forwardRef(({
     }
   };
 
-  // search handlers
+  // Search handlers
   const handleSearchChange = (e) => {
     onSearchChange?.(e.target.value);
   };
@@ -99,6 +99,22 @@ const WishlistToolbar = React.forwardRef(({
 
   const handleSearchFocus = () => setSearchFocused(true);
   const handleSearchBlur = () => setSearchFocused(false);
+
+  // Filter handlers
+  const handleFilterChange = (filterType, value) => {
+    const newFilters = { ...activeFilters };
+    if (value === '' || value === null) {
+      delete newFilters[filterType];
+    } else {
+      newFilters[filterType] = value;
+    }
+    onFilterChange?.(newFilters);
+  };
+
+  const handleClearAllFilters = () => {
+    onFilterChange?.({});
+    setShowFilters(false);
+  };
 
   // MOTION VARIANTS
   const toolbarVariants = {
@@ -244,7 +260,7 @@ const WishlistToolbar = React.forwardRef(({
       ref={ref}
       className={cn(
         'sticky top-0 z-30 overflow-hidden',
-        // glassmorphism with multiple layers
+        // Glassmorphism with multiple layers
         'bg-gradient-to-r from-background/85 via-background/90 to-background/85',
         'backdrop-blur-xl backdrop-saturate-150',
         'border-b border-gradient-to-r from-border/20 via-border/40 to-border/20',
@@ -263,7 +279,7 @@ const WishlistToolbar = React.forwardRef(({
       <div className="space-y-responsive-md relative z-10">
         {/* Main Toolbar */}
         <div className="flex items-center justify-between gap-responsive-md">
-          {/* Left Section: Sidebar Toggle + Search */}
+          {/* Left Section: Sidebar Toggle + Search + Stats */}
           <div className="flex items-center gap-responsive-md flex-1 min-w-0">
             {/* Mobile sidebar toggle */}
             <motion.div
@@ -320,6 +336,22 @@ const WishlistToolbar = React.forwardRef(({
                   )}
                 </AnimatePresence>
               </div>
+            </motion.div>
+
+            {/* Item Count Display */}
+            <motion.div
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3, type: "spring", stiffness: 400, damping: 20 }}
+              className="hidden md:flex items-center gap-2 text-sm text-muted"
+            >
+              <TrendingUp className="w-4 h-4" />
+              <span>
+                {itemCount === totalItems
+                  ? `${totalItems} items`
+                  : `${itemCount} of ${totalItems} items`
+                }
+              </span>
             </motion.div>
           </div>
 
@@ -652,78 +684,96 @@ const WishlistToolbar = React.forwardRef(({
                   className="grid grid-cols-1 md:grid-cols-3 gap-responsive-md"
                   variants={filterItemVariants}
                 >
-                  {[
-                    {
-                      label: 'Category',
-                      value: activeFilters.category || '',
-                      onChange: (value) => onFilterChange?.({ ...activeFilters, category: value }),
-                      options: [
-                        { value: '', label: 'All Categories' },
-                        { value: 'Electronics', label: 'Electronics' },
-                        { value: 'Fashion', label: 'Fashion' },
-                        { value: 'Books', label: 'Books' },
-                        { value: 'Home', label: 'Home' }
-                      ]
-                    },
-                    {
-                      label: 'Minimum Desire Score',
-                      value: activeFilters.minDesireScore || '',
-                      onChange: (value) => onFilterChange?.({ ...activeFilters, minDesireScore: value }),
-                      options: [
-                        { value: '', label: 'Any Score' },
-                        { value: '7', label: '7+ (High)' },
-                        { value: '5', label: '5+ (Medium)' },
-                        { value: '3', label: '3+ (Low)' }
-                      ]
-                    },
-                    {
-                      label: 'Status',
-                      value: activeFilters.status || '',
-                      onChange: (value) => onFilterChange?.({ ...activeFilters, status: value }),
-                      options: [
-                        { value: '', label: 'All Items' },
-                        { value: 'available', label: 'Available' },
-                        { value: 'dibbed', label: 'Dibbed' },
-                        { value: 'private', label: 'Private' },
-                        { value: 'public', label: 'Public' }
-                      ]
-                    }
-                  ].map((filter, index) => (
-                    <motion.div
-                      key={filter.label}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ 
-                        delay: index * 0.1,
-                        type: "spring",
-                        stiffness: 300,
-                        damping: 20
-                      }}
+                  {/* Category Filter */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0, type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <label className="block text-responsive-xs font-medium text-muted mb-1">
+                      Category
+                    </label>
+                    <motion.select
+                      className={cn(
+                        'w-full p-2 border border-border rounded-md',
+                        'bg-background/80 text-foreground backdrop-blur-sm',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500/50',
+                        'hover:border-primary-500/50 transition-all duration-200',
+                        'focus:bg-background/95'
+                      )}
+                      value={activeFilters.category || ''}
+                      onChange={(e) => handleFilterChange('category', e.target.value)}
+                      whileFocus={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
                     >
-                      <label className="block text-responsive-xs font-medium text-muted mb-1">
-                        {filter.label}
-                      </label>
-                      <motion.select
-                        className={cn(
-                          'w-full p-2 border border-border rounded-md',
-                          'bg-background/80 text-foreground backdrop-blur-sm',
-                          'focus:outline-none focus:ring-2 focus:ring-primary-500/50',
-                          'hover:border-primary-500/50 transition-all duration-200',
-                          'focus:bg-background/95'
-                        )}
-                        value={filter.value}
-                        onChange={(e) => filter.onChange(e.target.value)}
-                        whileFocus={{ scale: 1.02 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                      >
-                        {filter.options.map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
-                        ))}
-                      </motion.select>
-                    </motion.div>
-                  ))}
+                      <option value="">All Categories</option>
+                      {categoryOptions.map(category => (
+                        <option key={category} value={category}>
+                          {category}
+                        </option>
+                      ))}
+                    </motion.select>
+                  </motion.div>
+
+                  {/* Minimum Desire Score Filter */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <label className="block text-responsive-xs font-medium text-muted mb-1">
+                      Minimum Desire Score
+                    </label>
+                    <motion.select
+                      className={cn(
+                        'w-full p-2 border border-border rounded-md',
+                        'bg-background/80 text-foreground backdrop-blur-sm',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500/50',
+                        'hover:border-primary-500/50 transition-all duration-200',
+                        'focus:bg-background/95'
+                      )}
+                      value={activeFilters.minDesireScore || ''}
+                      onChange={(e) => handleFilterChange('minDesireScore', e.target.value)}
+                      whileFocus={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <option value="">Any Score</option>
+                      <option value="8">8+ (Must Have)</option>
+                      <option value="6">6+ (Strong Want)</option>
+                      <option value="4">4+ (Moderate)</option>
+                      <option value="2">2+ (Low Interest)</option>
+                    </motion.select>
+                  </motion.div>
+
+                  {/* Status Filter */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 300, damping: 20 }}
+                  >
+                    <label className="block text-responsive-xs font-medium text-muted mb-1">
+                      Status
+                    </label>
+                    <motion.select
+                      className={cn(
+                        'w-full p-2 border border-border rounded-md',
+                        'bg-background/80 text-foreground backdrop-blur-sm',
+                        'focus:outline-none focus:ring-2 focus:ring-primary-500/50',
+                        'hover:border-primary-500/50 transition-all duration-200',
+                        'focus:bg-background/95'
+                      )}
+                      value={activeFilters.status || ''}
+                      onChange={(e) => handleFilterChange('status', e.target.value)}
+                      whileFocus={{ scale: 1.02 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                    >
+                      <option value="">All Items</option>
+                      <option value="available">Available</option>
+                      <option value="dibbed">Dibbed</option>
+                      <option value="private">Private</option>
+                      <option value="public">Public</option>
+                    </motion.select>
+                  </motion.div>
                 </motion.div>
 
                 {/* Clear Filters with animation */}
@@ -743,7 +793,7 @@ const WishlistToolbar = React.forwardRef(({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => onFilterChange?.({})}
+                          onClick={handleClearAllFilters}
                           className="hover:bg-surface/60 transition-all duration-200"
                         >
                           Clear All Filters

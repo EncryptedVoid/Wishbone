@@ -1,11 +1,8 @@
 import React, { useState, useCallback } from 'react';
-import { ExternalLink, Lock, Eye } from 'lucide-react';
+import { ExternalLink, Lock, Eye, Heart, Crown } from 'lucide-react';
 import { cn } from '../../utils/cn';
+import { claimItem, unclaimItem } from '../../lib/wishlistService';
 
-/**
- * Ultra-Fast WishCard Component
- * Stripped down to essentials for maximum performance
- */
 const WishCard = React.memo(({
   item,
   mode = 'view',
@@ -14,22 +11,33 @@ const WishCard = React.memo(({
   onClick,
   onEdit,
   onDelete,
-  className
+  className,
+  user // Current user for dibs functionality
 }) => {
   const [imageError, setImageError] = useState(false);
+  const [claiming, setClaiming] = useState(false);
 
+  // Map service data to component expectations
   const {
     id,
     name,
     link,
-    imageUrl,
-    desireScore,
-    categoryTags = [],
-    isPrivate,
-    isDibbed,
-    dibbedBy,
-    description
+    image_url: imageUrl,
+    score: desireScore,
+    is_private: isPrivate,
+    dibbed_by: dibbedBy,
+    dibbed_at: dibbedAt,
+    description,
+    collection_ids: collectionIds = [],
+    // Category tags might be in metadata
+    metadata = {}
   } = item;
+
+  const categoryTags = metadata?.categoryTags || [];
+  const isDibbed = Boolean(dibbedBy);
+  const isMyItem = user && item.user_id === user.id;
+  const canClaim = !isDibbed && !isMyItem;
+  const canUnclaim = isDibbed && (dibbedBy === user?.id || isMyItem);
 
   // Minimal handlers
   const handleCardClick = useCallback(() => {
@@ -37,27 +45,48 @@ const WishCard = React.memo(({
       onSelect?.(id);
       return;
     }
-    if (isDibbed) {
-      alert(`This item has been dibbed by ${dibbedBy}`);
-      return;
-    }
     if (mode === 'view' && onClick) {
       onClick(item);
     }
-  }, [mode, onSelect, id, isDibbed, dibbedBy, onClick, item]);
+  }, [mode, onSelect, id, onClick, item]);
 
   const handleLinkClick = useCallback((e) => {
     e.stopPropagation();
-    if (!isDibbed) {
+    if (link) {
       window.open(link, '_blank', 'noopener noreferrer');
     }
-  }, [isDibbed, link]);
+  }, [link]);
 
   const handleImageError = useCallback(() => {
     setImageError(true);
   }, []);
 
-  // Simple desire score display (no fancy hearts)
+  // Dibs/Claim functionality
+  const handleClaimToggle = useCallback(async (e) => {
+    e.stopPropagation();
+
+    if (claiming) return;
+
+    try {
+      setClaiming(true);
+
+      if (isDibbed && canUnclaim) {
+        await unclaimItem(id);
+        // Update would be handled by parent component refresh
+      } else if (canClaim) {
+        await claimItem(id);
+        // Update would be handled by parent component refresh
+      }
+
+    } catch (err) {
+      console.error('Error toggling claim:', err);
+      alert(err.message || 'Failed to update claim status');
+    } finally {
+      setClaiming(false);
+    }
+  }, [id, isDibbed, canClaim, canUnclaim, claiming]);
+
+  // Simple desire score display
   const getDesireColor = (score) => {
     if (score <= 3) return 'bg-gray-400';
     if (score <= 6) return 'bg-yellow-400';
@@ -65,22 +94,26 @@ const WishCard = React.memo(({
     return 'bg-red-400';
   };
 
+  // Format dibs information
+  const getDibbedByName = (dibbedBy) => {
+    // If you have user data available, you could map user IDs to names
+    // For now, just show the ID or a placeholder
+    return dibbedBy === user?.id ? 'You' : 'Someone';
+  };
+
   return (
     <div
       className={cn(
-        // Minimal styling - no glassmorphism, no complex gradients
         'bg-white border border-gray-200 rounded-lg overflow-hidden',
         'hover:shadow-lg transition-shadow duration-200',
         'cursor-pointer',
-        // Selection state
         mode === 'select' && selected && 'ring-2 ring-blue-500',
-        // Dibs state
         isDibbed && 'opacity-75 border-dashed',
         className
       )}
       onClick={handleCardClick}
     >
-      {/* Image Section - Simplified */}
+      {/* Image Section */}
       <div className="relative aspect-[4/3] bg-gray-100">
         {!imageError && imageUrl ? (
           <img
@@ -88,7 +121,7 @@ const WishCard = React.memo(({
             alt={name}
             className="w-full h-full object-cover"
             onError={handleImageError}
-            loading="lazy" // Browser-native lazy loading
+            loading="lazy"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -96,18 +129,23 @@ const WishCard = React.memo(({
           </div>
         )}
 
-        {/* Dibs Overlay - Minimal */}
+        {/* Dibs Overlay */}
         {isDibbed && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
             <div className="text-center text-white">
               <Lock className="w-6 h-6 mx-auto mb-1" />
               <p className="text-sm font-medium">Reserved</p>
-              <p className="text-xs">by {dibbedBy}</p>
+              <p className="text-xs">by {getDibbedByName(dibbedBy)}</p>
+              {dibbedAt && (
+                <p className="text-xs opacity-75">
+                  {new Date(dibbedAt).toLocaleDateString()}
+                </p>
+              )}
             </div>
           </div>
         )}
 
-        {/* Privacy Badge - Simplified */}
+        {/* Privacy Badge */}
         {isPrivate && (
           <div className="absolute top-2 left-2">
             <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-black bg-opacity-75 text-white">
@@ -117,8 +155,18 @@ const WishCard = React.memo(({
           </div>
         )}
 
-        {/* Link Button - Simplified */}
-        {!isDibbed && (
+        {/* Owner Badge */}
+        {isMyItem && (
+          <div className="absolute top-2 left-2">
+            <span className="inline-flex items-center px-2 py-1 rounded text-xs bg-blue-500 bg-opacity-90 text-white">
+              <Crown className="w-3 h-3 mr-1" />
+              Yours
+            </span>
+          </div>
+        )}
+
+        {/* Link Button */}
+        {link && (
           <button
             onClick={handleLinkClick}
             className="absolute top-2 right-2 p-2 bg-black bg-opacity-75 text-white rounded hover:bg-opacity-90 transition-colors"
@@ -128,7 +176,24 @@ const WishCard = React.memo(({
           </button>
         )}
 
-        {/* Selection Checkbox - Simplified */}
+        {/* Claim/Unclaim Button */}
+        {(canClaim || canUnclaim) && (
+          <button
+            onClick={handleClaimToggle}
+            disabled={claiming}
+            className={cn(
+              'absolute bottom-2 right-2 p-2 rounded text-white transition-colors',
+              canClaim && 'bg-green-500 hover:bg-green-600',
+              canUnclaim && 'bg-red-500 hover:bg-red-600',
+              claiming && 'opacity-50 cursor-not-allowed'
+            )}
+            aria-label={canClaim ? 'Claim item' : 'Remove claim'}
+          >
+            <Heart className={cn('w-4 h-4', isDibbed && 'fill-current')} />
+          </button>
+        )}
+
+        {/* Selection Checkbox */}
         {mode === 'select' && (
           <div className="absolute top-2 left-2">
             <div className={cn(
@@ -141,14 +206,14 @@ const WishCard = React.memo(({
         )}
       </div>
 
-      {/* Content Section - Minimal */}
+      {/* Content Section */}
       <div className="p-4 space-y-3">
         {/* Title */}
         <h3 className="font-semibold text-gray-900 line-clamp-2">
           {name}
         </h3>
 
-        {/* Desire Score - Simple Bar */}
+        {/* Desire Score */}
         <div className="flex items-center space-x-2">
           <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
             <div
@@ -160,11 +225,13 @@ const WishCard = React.memo(({
         </div>
 
         {/* Description */}
-        <p className="text-sm text-gray-600 line-clamp-2">
-          {description}
-        </p>
+        {description && (
+          <p className="text-sm text-gray-600 line-clamp-2">
+            {description}
+          </p>
+        )}
 
-        {/* Tags - Simplified */}
+        {/* Tags */}
         {categoryTags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {categoryTags.slice(0, 3).map((tag) => (
@@ -183,7 +250,14 @@ const WishCard = React.memo(({
           </div>
         )}
 
-        {/* Action Buttons for Edit/Delete modes */}
+        {/* Collections */}
+        {collectionIds.length > 0 && (
+          <div className="text-xs text-gray-500">
+            In {collectionIds.length} collection{collectionIds.length !== 1 ? 's' : ''}
+          </div>
+        )}
+
+        {/* Action Buttons */}
         {(mode === 'edit' || mode === 'delete') && (
           <div className="flex gap-2 pt-2">
             {mode === 'edit' && (
@@ -210,6 +284,14 @@ const WishCard = React.memo(({
             )}
           </div>
         )}
+
+        {/* Timestamps */}
+        <div className="text-xs text-gray-400 flex justify-between">
+          <span>Added {new Date(item.created_at).toLocaleDateString()}</span>
+          {item.updated_at !== item.created_at && (
+            <span>Updated {new Date(item.updated_at).toLocaleDateString()}</span>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -218,53 +300,3 @@ const WishCard = React.memo(({
 WishCard.displayName = 'WishCard';
 
 export default WishCard;
-
-/*
-PERFORMANCE OPTIMIZATIONS APPLIED:
-
-1. ELIMINATED MOTION COMPONENTS:
-   - Removed all framer-motion elements
-   - No complex animations or transitions
-   - Simple CSS transitions only
-
-2. SIMPLIFIED STYLING:
-   - Removed glassmorphism effects
-   - No backdrop-blur (mobile GPU killer)
-   - No complex gradients
-   - Basic box-shadow only
-
-3. REDUCED DOM COMPLEXITY:
-   - Minimal nested divs
-   - No overlay components
-   - Simple conditional rendering
-
-4. OPTIMIZED IMAGES:
-   - Browser-native lazy loading
-   - Simple error handling
-   - No skeleton animations
-
-5. MEMOIZATION:
-   - React.memo wrapper
-   - useCallback for handlers
-   - Prevented unnecessary re-renders
-
-6. SIMPLIFIED INTERACTIONS:
-   - No tooltips
-   - No complex menus
-   - Direct button actions
-
-7. BASIC VISUAL FEEDBACK:
-   - Simple hover states
-   - Basic selection indicators
-   - Minimal animations
-
-PERFORMANCE GAINS:
-- 90% fewer DOM nodes per card
-- 95% less CSS computation
-- 100% elimination of expensive effects
-- 80% faster rendering
-- Smooth scrolling even with 100+ cards
-
-This version maintains full functionality while being
-extremely lightweight and performant.
-*/

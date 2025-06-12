@@ -5,11 +5,17 @@ import { useAuth } from '../../hooks/useAuth';
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
 
+  // Show loading while auth state is being determined
   if (loading) {
     return <LoadingSpinner />;
   }
 
-  return user ? children : <Navigate to="/auth" replace />;
+  // Only redirect if we're certain the user is not authenticated
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return children;
 };
 
 export default ProtectedRoute;
