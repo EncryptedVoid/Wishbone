@@ -46,7 +46,7 @@ function App() {
           <Route path="/wishlist" element={
             <ProtectedRoute>
               <Wishlist />
-              <WishlistDemo/>
+              {/* <WishlistDemo/> */}
               {/* <TestWishlist /> */}
             </ProtectedRoute>
           } />

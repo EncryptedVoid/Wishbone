@@ -1,42 +1,54 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '../../utils/cn';
-import CollectionSidebar from '../../components/ui/CollectionSidebar';
-import WishlistToolbar from '../../components/wishes/WishlistToolbar';
-import WishCard from '../../components/wishes/WishCard';
-import LoadingState from '../../components/ui/LoadingState';
-import AddWishModal from '../../components/wishes/AddWishModal';
 
-// Import service functions
+// Import organisms
+import CollectionSidebar from '../../components/wishes/organisms/CollectionSidebar';
+import WishlistToolbar from '../../components/wishes/organisms/WishlistToolbar';
+import WishGrid from '../../components/wishes/organisms/WishGrid';
+import WishModal from '../../components/wishes/organisms/WishModal';
+
+// Import UI components
+import LoadingState from '../../components/ui/LoadingState';
+
+// Import services
 import {
-  getMyWishlistItems,
-  getMyCollections,
   getDashboardData,
-  searchWishlistItems,
-  getItemsByScoreRange,
-  getItemsInCollection,
   deleteWishlistItem,
   createWishlistItem,
   updateWishlistItem,
-  claimItem,
-  unclaimItem,
   createCollection
 } from '../../lib/wishlistService';
 
 import { getCurrentUser } from '../../lib/authService';
 
+// Import performance utilities
 import {
   ultraPerformanceManager,
   getMinimalVariants,
-  UltraFastSearch,
   useMinimalDebounce,
   useUltraFastFilter
 } from '../../utils/aggressivePerformanceUtils';
 
+/**
+ * UltraFastWishlistDesktop - Redesigned desktop wishlist using atomic design
+ * 
+ * Features:
+ * - Clean atomic design structure with organisms/molecules/atoms
+ * - Fixed sidebar with dashboard summary
+ * - Optimized grid layouts (1-3 columns based on content)
+ * - Advanced filtering and search
+ * - Bulk operations with intuitive UX
+ * - Role-based access control
+ * - Performance optimizations for large datasets
+ * - Professional keyboard shortcuts
+ */
 const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
+  // ===============================
   // STATE MANAGEMENT
+  // ===============================
   const [activeCollection, setActiveCollection] = useState('all');
-  const [currentMode, setCurrentMode] = useState('view');
+  const [currentMode, setCurrentMode] = useState('view'); // 'view' | 'select' | 'edit'
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   const [activeFilters, setActiveFilters] = useState({});
@@ -56,57 +68,55 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
   const { enableAnimations, maxVisibleItems } = ultraPerformanceManager.settings;
   const variants = useMemo(() => getMinimalVariants(), []);
 
-  // AUTHENTICATION CHECK
+  // ===============================
+  // AUTHENTICATION & DATA LOADING
+  // ===============================
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        if (currentUser) {
-          setUser(currentUser);
-        } else {
-          setError('Please log in to view your wishlist');
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error('Authentication error:', err);
-        setError('Authentication failed. Please log in again.');
-        setLoading(false);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  // LOAD DASHBOARD DATA
-  useEffect(() => {
-    if (!user) return;
-
-    const loadDashboardData = async () => {
+    const initializeApp = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        // Check authentication
+        const currentUser = await getCurrentUser();
+        if (!currentUser) {
+          setError('Please log in to view your wishlist');
+          return;
+        }
+        setUser(currentUser);
+
+        // Load dashboard data
         const { collections: userCollections, items: userItems, summary } = await getDashboardData();
 
+        // Set collections with default 'all' collection
         setCollections([
-          { id: 'all', name: 'All Items', icon: '📋', isDefault: true, item_count: userItems.length },
+          { 
+            id: 'all', 
+            name: 'All Items', 
+            icon: '📋', 
+            isDefault: true, 
+            item_count: userItems.length 
+          },
           ...userCollections
         ]);
+        
         setWishlistItems(userItems);
-        setDashboardSummary(summary);
+        setDashboardSummary(summary || {});
 
       } catch (err) {
-        console.error('Error loading dashboard data:', err);
+        console.error('Error initializing app:', err);
         setError(err.message || 'Failed to load wishlist data');
       } finally {
         setLoading(false);
       }
     };
 
-    loadDashboardData();
-  }, [user]);
+    initializeApp();
+  }, []);
 
+  // ===============================
   // DEBOUNCED SEARCH
+  // ===============================
   const debouncedSetSearch = useMinimalDebounce((query) => {
     setDebouncedSearchQuery(query);
   }, ultraPerformanceManager.settings.debounceDelay);
@@ -115,7 +125,9 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     debouncedSetSearch(searchQuery);
   }, [searchQuery, debouncedSetSearch]);
 
-  // FILTERED ITEMS WITH SERVICE INTEGRATION
+  // ===============================
+  // OPTIMIZED FILTERING
+  // ===============================
   const filteredItems = useMemo(() => {
     let items = wishlistItems;
 
@@ -138,62 +150,86 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
       );
     }
 
-    // Filter by active filters
-    if (activeFilters.category) {
-      items = items.filter(item =>
-        item.metadata?.categoryTags?.includes(activeFilters.category) ||
-        item.category_tags?.includes(activeFilters.category)
-      );
-    }
+    // Apply filters
+    Object.entries(activeFilters).forEach(([key, value]) => {
+      if (!value) return;
 
-    if (activeFilters.minDesireScore) {
-      const minScore = parseInt(activeFilters.minDesireScore);
-      items = items.filter(item => item.score >= minScore);
-    }
-
-    if (activeFilters.status) {
-      switch (activeFilters.status) {
-        case 'available':
-          items = items.filter(item => !item.dibbed_by);
+      switch (key) {
+        case 'category':
+          items = items.filter(item =>
+            item.metadata?.categoryTags?.includes(value) ||
+            item.category_tags?.includes(value)
+          );
           break;
-        case 'dibbed':
-          items = items.filter(item => item.dibbed_by);
+        case 'minDesireScore':
+          items = items.filter(item => item.score >= parseInt(value));
           break;
-        case 'private':
-          items = items.filter(item => item.is_private);
-          break;
-        case 'public':
-          items = items.filter(item => !item.is_private);
+        case 'status':
+          switch (value) {
+            case 'available':
+              items = items.filter(item => !item.dibbed_by);
+              break;
+            case 'dibbed':
+              items = items.filter(item => item.dibbed_by);
+              break;
+            case 'private':
+              items = items.filter(item => item.is_private);
+              break;
+            case 'public':
+              items = items.filter(item => !item.is_private);
+              break;
+          }
           break;
       }
-    }
+    });
 
     return items.slice(0, maxVisibleItems);
   }, [wishlistItems, activeCollection, debouncedSearchQuery, activeFilters, maxVisibleItems]);
 
-  // OPTIMIZED GRID CONFIGURATION
-  const getGridColumns = useCallback(() => {
-    const itemCount = filteredItems.length;
-    if (itemCount === 0) return 'grid-cols-1';
-    if (itemCount === 1) return 'grid-cols-1 max-w-md mx-auto';
-    if (itemCount === 2) return 'grid-cols-2 max-w-2xl mx-auto';
+  // ===============================
+  // KEYBOARD SHORTCUTS
+  // ===============================
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Cmd/Ctrl + K: Focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        document.querySelector('[data-search-input]')?.focus();
+      }
 
-    // Simplified grid - fewer columns for better performance
-    return 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3';
-  }, [filteredItems.length]);
+      // Cmd/Ctrl + N: New item
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        setShowAddModal(true);
+      }
 
-  // MEMOIZED GRID CLASSES
-  const gridClasses = useMemo(() => getGridColumns(), [getGridColumns]);
+      // Escape: Cancel selection/close modals
+      if (e.key === 'Escape') {
+        if (currentMode === 'select') {
+          setCurrentMode('view');
+          setSelectedItems([]);
+        }
+      }
 
+      // Cmd/Ctrl + A: Select all (in select mode)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'a' && currentMode === 'select') {
+        e.preventDefault();
+        setSelectedItems(filteredItems.map(item => item.id));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentMode, filteredItems]);
+
+
+
+  // ===============================
   // EVENT HANDLERS
-  const handleCollectionChange = useCallback(async (collectionId) => {
-    try {
-      setActiveCollection(collectionId);
-      setSelectedItems([]);
-    } catch (err) {
-      console.error('Error changing collection:', err);
-      setError('Failed to load collection items');
-    }
+  // ===============================
+  const handleCollectionChange = useCallback((collectionId) => {
+    setActiveCollection(collectionId);
+    setSelectedItems([]);
   }, []);
 
   const handleModeChange = useCallback((mode) => {
@@ -205,15 +241,18 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     setSelectedItems(prev => {
       const index = prev.indexOf(itemId);
       if (index > -1) {
-        const newSelected = [...prev];
-        newSelected.splice(index, 1);
-        return newSelected;
+        return prev.filter(id => id !== itemId);
       }
       return [...prev, itemId];
     });
   }, []);
 
-  const handleItemClick = useCallback(async (item) => {
+  const handleItemClick = useCallback((item) => {
+    if (currentMode === 'select') {
+      handleItemSelect(item.id);
+      return;
+    }
+
     if (item.dibbed_by && item.dibbed_by !== user?.id) {
       alert(`This item has been dibbed by someone else`);
       return;
@@ -222,14 +261,15 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     if (item.link) {
       window.open(item.link, '_blank', 'noopener noreferrer');
     }
-  }, [user]);
+  }, [currentMode, handleItemSelect, user]);
 
+  // ===============================
   // CRUD OPERATIONS
+  // ===============================
   const handleAddItem = useCallback(async (itemData) => {
     try {
       setLoading(true);
 
-      // Transform form data to service format
       const wishlistData = {
         name: itemData.name,
         description: itemData.description,
@@ -244,8 +284,6 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
       };
 
       const newItem = await createWishlistItem(wishlistData);
-
-      // Update local state
       setWishlistItems(prev => [newItem, ...prev]);
 
       // Update collection counts
@@ -270,8 +308,8 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     }
   }, [collections]);
 
-  const handleEditItem = useCallback(async (item) => {
-    // TODO: Implement edit modal and update logic
+  const handleEditItem = useCallback((item) => {
+    // TODO: Open edit modal
     console.log('Edit item:', item);
   }, []);
 
@@ -283,8 +321,6 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     try {
       setLoading(true);
       await deleteWishlistItem(item.id);
-
-      // Update local state
       setWishlistItems(prev => prev.filter(i => i.id !== item.id));
 
       // Update collection counts
@@ -316,10 +352,9 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
       switch (action) {
         case 'delete':
           if (!window.confirm(`Delete ${itemIds.length} items?`)) return;
-
           await Promise.all(itemIds.map(id => deleteWishlistItem(id)));
           setWishlistItems(prev => prev.filter(item => !itemIds.includes(item.id)));
-
+          
           // Refresh collections to update counts
           const { collections: refreshedCollections } = await getDashboardData();
           setCollections([
@@ -329,7 +364,6 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
           break;
 
         case 'privacy':
-          // Toggle privacy for selected items
           const updates = itemIds.map(async (id) => {
             const item = wishlistItems.find(i => i.id === id);
             if (item) {
@@ -337,8 +371,7 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
             }
           });
           await Promise.all(updates);
-
-          // Refresh data
+          
           const { items: refreshedItems } = await getDashboardData();
           setWishlistItems(refreshedItems);
           break;
@@ -382,53 +415,9 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     }
   }, []);
 
-  // EMPTY STATE
-  const EmptyState = useMemo(() => (
-    <div className="col-span-full flex flex-col items-center justify-center py-16 text-center">
-      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-        <span className="text-2xl">🎁</span>
-      </div>
-      <h3 className="text-lg font-semibold mb-2">
-        {searchQuery ? 'No items found' : 'Your wishlist is empty'}
-      </h3>
-      <p className="text-sm text-gray-600 mb-4 max-w-md">
-        {searchQuery ? 'Try adjusting your search terms' : 'Start building your wishlist by adding items'}
-      </p>
-      {!searchQuery && (
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-        >
-          Add Your First Item
-        </button>
-      )}
-    </div>
-  ), [searchQuery]);
-
-  // OPTIMIZED GRID CONTENT
-  const GridContent = useMemo(() => {
-    if (filteredItems.length === 0) {
-      return <EmptyState />;
-    }
-
-    return filteredItems.map((item) => (
-      <div key={item.id}>
-        <WishCard
-          item={item}
-          mode={currentMode}
-          selected={selectedItems.includes(item.id)}
-          onSelect={handleItemSelect}
-          onClick={handleItemClick}
-          onEdit={handleEditItem}
-          onDelete={handleDeleteItem}
-          className="h-full"
-          user={user}
-        />
-      </div>
-    ));
-  }, [filteredItems, currentMode, selectedItems, handleItemSelect, handleItemClick, handleEditItem, handleDeleteItem, user, EmptyState]);
-
-    // ERROR BOUNDARY
+  // ===============================
+  // ERROR BOUNDARY
+  // ===============================
   if (error) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-4">
@@ -449,10 +438,12 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     );
   }
 
+  // ===============================
   // MAIN RENDER
+  // ===============================
   return (
     <>
-      <div className={cn('min-h-screen bg-white pt-16 pb-16', className)} {...props}>
+      <div className={cn('min-h-screen bg-white', className)} {...props}>
         <div className="flex h-screen">
           {/* Fixed Sidebar */}
           <CollectionSidebar
@@ -462,6 +453,7 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
             onAddCollection={() => setShowAddCollectionModal(true)}
             className="flex-shrink-0"
             summary={dashboardSummary}
+            userRole="owner"
           />
 
           {/* Main Content Area */}
@@ -477,54 +469,36 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
               selectedItems={selectedItems}
               onBulkAction={handleBulkAction}
               onAddItem={() => setShowAddModal(true)}
+              userRole="owner"
               itemCount={filteredItems.length}
               totalItems={wishlistItems.length}
+              isMobile={false}
             />
 
             {/* Content Grid */}
             <main className="flex-1 overflow-y-auto">
               <div className="p-6">
                 <LoadingState isLoading={loading}>
-                  {enableAnimations ? (
-                    <motion.div
-                      className={cn('grid gap-6', gridClasses)}
-                      variants={variants.container}
-                      initial="initial"
-                      animate="animate"
-                    >
-                      <AnimatePresence mode="popLayout">
-                        {filteredItems.length > 0 ? (
-                          filteredItems.map((item) => (
-                            <motion.div
-                              key={item.id}
-                              variants={variants.item}
-                            >
-                              <WishCard
-                                item={item}
-                                mode={currentMode}
-                                selected={selectedItems.includes(item.id)}
-                                onSelect={handleItemSelect}
-                                onClick={handleItemClick}
-                                onEdit={handleEditItem}
-                                onDelete={handleDeleteItem}
-                                className="h-full"
-                                user={user}
-                              />
-                            </motion.div>
-                          ))
-                        ) : (
-                          <motion.div key="empty" variants={variants.item}>
-                            <EmptyState />
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </motion.div>
-                  ) : (
-                    // No animations version for better performance
-                    <div className={cn('grid gap-6', gridClasses)}>
-                      {GridContent}
-                    </div>
-                  )}
+                  <WishGrid
+                    items={filteredItems}
+                    selectedItems={selectedItems}
+                    userRole="owner"
+                    mode={currentMode}
+                    currentUserId={user?.id}
+                    collections={collections}
+                    onItemClick={handleItemClick}
+                    onItemSelect={handleItemSelect}
+                    onBulkAction={handleBulkAction}
+                    onClearSelection={() => {
+                      setSelectedItems([]);
+                      setCurrentMode('view');
+                    }}
+                    onSelectAll={(itemIds) => setSelectedItems(itemIds)}
+                    onAddItem={() => setShowAddModal(true)}
+                    loading={loading}
+                    searchQuery={searchQuery}
+                    activeFilters={activeFilters}
+                  />
                 </LoadingState>
               </div>
             </main>
@@ -533,18 +507,26 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
       </div>
 
       {/* Add Item Modal */}
-      <AddWishModal
+      <WishModal
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSave={handleAddItem}
+        mode="add"
         defaultCollection={activeCollection}
         collections={collections}
+        loading={loading}
       />
 
-      {/* Add Collection Modal - TODO: Create this component */}
+      {/* Add Collection Modal */}
       {showAddCollectionModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+          <motion.div 
+            className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl"
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            transition={{ duration: 0.2 }}
+          >
             <h3 className="text-lg font-semibold mb-4">Add New Collection</h3>
             <form
               onSubmit={(e) => {
@@ -608,19 +590,19 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
                 <button
                   type="button"
                   onClick={() => setShowAddCollectionModal(false)}
-                  className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                 >
                   Create Collection
                 </button>
               </div>
             </form>
-          </div>
+          </motion.div>
         </div>
       )}
     </>
