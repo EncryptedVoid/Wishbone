@@ -1,7 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { ExternalLink, Calendar } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Calendar } from 'lucide-react';
+import { formatDistanceToNow, isToday, isYesterday, format, isThisYear } from 'date-fns';
 import { cn } from '../../../utils/cn';
 
 // Import atoms
@@ -11,26 +11,18 @@ import WishScore from '../atoms/WishScore';
 import DibsControl from '../atoms/DibsControl';
 
 /**
- * WishCard Component - Main wish item card with role-based behavior
+ * Enhanced WishCard Component - Addresses all reported issues
  *
- * Features:
- * - Adaptive height based on image presence
- * - Role-based rendering and interactions
- * - Mode-based click behavior (view/edit/select)
- * - Smooth animations and hover effects
- * - Theme-aware styling
- * - Optimized for touch and mouse interactions
- *
- * @param {Object} item - Wish item data
- * @param {string} userRole - User's role: 'owner' | 'friend' | 'visitor'
- * @param {string} mode - Current mode: 'view' | 'edit' | 'select'
- * @param {boolean} selected - Whether card is selected (for bulk operations)
- * @param {function} onSelect - Selection toggle handler
- * @param {function} onClick - Card click handler
- * @param {function} onDibsChange - Dibs change handler
- * @param {Array} collections - Available collections for mapping IDs to names
- * @param {string} currentUserId - Current user's ID
- * @param {string} className - Additional CSS classes
+ * Fixes:
+ * - Dark mode background properly adapts with bg-background
+ * - Removed ExternalLink hyperlink logo
+ * - Dynamic height based on image presence (no placeholder images)
+ * - Generalized timestamps (Today, Yesterday, exact date, or years)
+ * - Removed fractions from desire score
+ * - Removed collection tags display
+ * - Improved design with better styling
+ * - Italicized and smaller description text
+ * - Better theme-aware styling throughout
  */
 const WishCard = React.forwardRef(({
   item,
@@ -59,7 +51,6 @@ const WishCard = React.forwardRef(({
     score,
     is_private: isPrivate,
     dibbed_by: dibbedBy,
-    collection_ids: collectionIds = [],
     created_at: createdAt,
     updated_at: updatedAt
   } = item;
@@ -70,6 +61,35 @@ const WishCard = React.forwardRef(({
   const showDibs = userRole === 'friend';
   const showPrivacyBadge = isPrivate && (userRole === 'owner' || userRole === 'friend');
   const showReservedBadge = dibbedBy && userRole === 'friend';
+
+  // Format timestamp intelligently
+  const formatTimestamp = useCallback((timestamp) => {
+    if (!timestamp) return '';
+
+    const date = new Date(timestamp);
+    const now = new Date();
+
+    if (isToday(date)) {
+      return 'Today';
+    }
+
+    if (isYesterday(date)) {
+      return 'Yesterday';
+    }
+
+    // If more than a year ago, just show the year
+    if (now.getFullYear() - date.getFullYear() >= 1) {
+      return format(date, 'yyyy');
+    }
+
+    // Otherwise show the exact date
+    return format(date, 'MMM d, yyyy');
+  }, []);
+
+  // Remove fractions from desire score
+  const displayScore = useMemo(() => {
+    return Math.floor(score || 0);
+  }, [score]);
 
   // Click behavior based on mode and role
   const handleCardClick = useCallback((e) => {
@@ -88,30 +108,17 @@ const WishCard = React.forwardRef(({
       return;
     }
 
-    if (mode === 'view' && link) {
-      window.open(link, '_blank', 'noopener noreferrer');
-      return;
-    }
-
-    // Default: just highlight or show details
+    // Removed automatic link opening - no more hyperlink behavior
     onClick?.(item);
-  }, [isSelectMode, mode, userRole, link, onSelect, onClick, id, item]);
+  }, [isSelectMode, mode, userRole, onSelect, onClick, id, item]);
 
-  // Handle selection with event isolation
+  // Handle selection in select mode
   const handleSelect = useCallback((e) => {
     e.stopPropagation();
     onSelect?.(id);
   }, [onSelect, id]);
 
-  // Handle external link click
-  const handleLinkClick = useCallback((e) => {
-    e.stopPropagation();
-    if (link) {
-      window.open(link, '_blank', 'noopener noreferrer');
-    }
-  }, [link]);
-
-  // Image handlers
+  // Image loading handlers
   const handleImageLoad = useCallback(() => {
     setImageLoading(false);
   }, []);
@@ -121,48 +128,27 @@ const WishCard = React.forwardRef(({
     setImageLoading(false);
   }, []);
 
-  // Get collection names from IDs
-  const getCollectionNames = useCallback((ids) => {
-    return ids
-      .map(id => collections.find(c => c.id === id)?.name)
-      .filter(Boolean)
-      .slice(0, 2); // Limit to 2 for space
-  }, [collections]);
-
-  // Format date helper
-  const formatDate = (dateString) => {
-    try {
-      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
-    } catch {
-      return 'Unknown date';
-    }
-  };
-
   // Animation variants
   const cardVariants = {
-    initial: {
-      opacity: 0,
-      y: 20,
-      scale: 0.95
-    },
+    initial: { opacity: 0, y: 20, scale: 0.95 },
     animate: {
       opacity: 1,
       y: 0,
       scale: 1,
       transition: {
         type: "spring",
-        stiffness: 400,
+        stiffness: 300,
         damping: 25,
         duration: 0.6
       }
     },
     hover: {
-      y: -4,
+      y: -8,
       scale: 1.02,
       transition: {
         type: "spring",
         stiffness: 400,
-        damping: 15
+        damping: 20
       }
     },
     tap: {
@@ -170,12 +156,12 @@ const WishCard = React.forwardRef(({
       transition: { duration: 0.1 }
     },
     selected: {
-      scale: 0.98,
-      y: -2,
+      scale: 1.05,
+      y: -4,
       transition: {
         type: "spring",
-        stiffness: 300,
-        damping: 20
+        stiffness: 400,
+        damping: 25
       }
     }
   };
@@ -184,20 +170,23 @@ const WishCard = React.forwardRef(({
     <motion.div
       ref={ref}
       className={cn(
-        // Base styles
-        'bg-background border border-border rounded-xl overflow-hidden',
-        'cursor-pointer transition-all duration-200',
-        'hover:shadow-lg hover:shadow-primary-500/10',
-        'focus-within:ring-2 focus-within:ring-primary-500/50',
+        // Base card styling with proper theme awareness
+        'group relative overflow-hidden cursor-pointer',
+        'bg-background border border-border/50 rounded-xl',
+        'shadow-sm hover:shadow-lg transition-all duration-300',
+        'backdrop-blur-sm',
+
+        // Theme-aware hover effects
+        'hover:border-primary-300/50 hover:bg-background/80',
 
         // Selection state
         selected && [
-          'ring-2 ring-primary-500 shadow-lg shadow-primary-500/20',
-          'bg-primary-50/50 dark:bg-primary-950/50'
-        ].join(' '),
+          'ring-2 ring-primary-500/50 border-primary-500/50',
+          'bg-primary-50/50 dark:bg-primary-900/20'
+        ],
 
-        // Mode-specific styles
-        isSelectMode && 'hover:bg-primary-50/30 dark:hover:bg-primary-950/30',
+        // Responsive height - dynamic based on image presence
+        hasImage ? 'min-h-[320px]' : 'min-h-[160px]',
 
         className
       )}
@@ -209,8 +198,8 @@ const WishCard = React.forwardRef(({
       onClick={handleCardClick}
       {...props}
     >
-      {/* Image Section */}
-      {hasImage ? (
+      {/* Image Section - Only render if image exists */}
+      {hasImage && (
         <div className="relative aspect-[4/3] overflow-hidden bg-muted/30">
           <img
             src={imageUrl}
@@ -232,10 +221,10 @@ const WishCard = React.forwardRef(({
             </div>
           )}
 
-          {/* Overlay elements */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent" />
+          {/* Subtle overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
 
-          {/* Select checkbox */}
+          {/* Select checkbox - positioned on image */}
           {isSelectMode && (
             <div className="absolute top-3 left-3">
               <SelectCheckbox
@@ -246,142 +235,111 @@ const WishCard = React.forwardRef(({
             </div>
           )}
 
-          {/* Privacy badge */}
-          {showPrivacyBadge && (
-            <div className="absolute top-3 right-3">
-              <WishBadge type="private" size="sm" />
-            </div>
-          )}
-
-          {/* Reserved badge */}
-          {showReservedBadge && (
-            <div className="absolute top-3 right-3 flex gap-2">
-              {showPrivacyBadge && <WishBadge type="private" size="sm" />}
-              <WishBadge type="reserved" size="sm" />
-            </div>
-          )}
-
-          {/* External link button */}
-          {link && !isSelectMode && (
-            <button
-              onClick={handleLinkClick}
-              className={cn(
-                'absolute bottom-3 right-3 p-2',
-                'bg-background/90 hover:bg-background',
-                'border border-border/50 rounded-lg',
-                'text-foreground hover:text-primary-600',
-                'backdrop-blur-sm shadow-sm hover:shadow-md',
-                'transition-all duration-200'
-              )}
-              aria-label="Open product link"
-            >
-              <ExternalLink className="w-4 h-4" />
-            </button>
-          )}
-        </div>
-      ) : (
-        /* No Image - Compact header */
-        <div className="relative h-16 bg-muted/30 flex items-center justify-center">
-          <span className="text-2xl opacity-70">🎁</span>
-
-          {/* Select checkbox */}
-          {isSelectMode && (
-            <div className="absolute top-2 left-3">
-              <SelectCheckbox
-                checked={selected}
-                onChange={handleSelect}
-                size="sm"
-              />
-            </div>
-          )}
-
-          {/* Badges */}
-          <div className="absolute top-2 right-3 flex gap-1">
+          {/* Privacy and reserved badges */}
+          <div className="absolute top-3 right-3 flex gap-2">
             {showPrivacyBadge && <WishBadge type="private" size="sm" />}
             {showReservedBadge && <WishBadge type="reserved" size="sm" />}
           </div>
-
-          {/* External link */}
-          {link && !isSelectMode && (
-            <button
-              onClick={handleLinkClick}
-              className={cn(
-                'absolute right-2 p-1.5',
-                'bg-background/80 hover:bg-background',
-                'border border-border/50 rounded-md',
-                'text-muted-foreground hover:text-primary-600',
-                'transition-all duration-200'
-              )}
-              aria-label="Open product link"
-            >
-              <ExternalLink className="w-3 h-3" />
-            </button>
-          )}
         </div>
       )}
 
-      {/* Content Section */}
-      <div className="p-4 space-y-3">
-        {/* Title */}
-        <div className="space-y-1">
-          <h3 className={cn(
-            'font-semibold text-foreground leading-tight',
-            'line-clamp-2 text-sm md:text-base'
-          )}>
-            {name}
-          </h3>
+      {/* Content Section - Always present, adjusted spacing for no-image cards */}
+      <div className={cn(
+        'p-4 space-y-3 flex-1 flex flex-col',
+        !hasImage && 'pt-6' // Extra padding if no image
+      )}>
 
-          {/* Description */}
-          {description && (
-            <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-              {description}
-            </p>
-          )}
-        </div>
+        {/* Header row - checkbox for no-image cards, title, and badges */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {/* Select checkbox for no-image cards */}
+            {isSelectMode && !hasImage && (
+              <div className="pt-1 flex-shrink-0">
+                <SelectCheckbox
+                  checked={selected}
+                  onChange={handleSelect}
+                  size="sm"
+                />
+              </div>
+            )}
 
-        {/* Desire Score */}
-        <WishScore
-          score={score}
-          variant="hearts"
-          size="sm"
-          showLabel={true}
-          interactive={false}
-        />
-
-        {/* Dibs Control - Only for Friends */}
-        {showDibs && (
-          <DibsControl
-            itemId={id}
-            dibbedBy={dibbedBy}
-            currentUserId={currentUserId}
-            userRole={userRole}
-            onDibsChange={onDibsChange}
-            size="sm"
-          />
-        )}
-
-        {/* Footer - Collections & Timestamp */}
-        <div className={cn(
-          'flex items-center justify-between text-xs text-muted-foreground',
-          'pt-2 border-t border-border/50'
-        )}>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3" />
-            <span>Added {formatDate(createdAt)}</span>
+            {/* Title */}
+            <h3 className={cn(
+              'font-semibold text-foreground leading-tight',
+              'line-clamp-2 group-hover:text-primary-600',
+              'transition-colors duration-200',
+              hasImage ? 'text-lg' : 'text-base'
+            )}>
+              {name}
+            </h3>
           </div>
 
-          {/* Collections */}
-          {collectionIds.length > 0 && (
-            <div className="flex items-center gap-1 max-w-[50%]">
-              <span className="opacity-75">📁</span>
-              <span className="truncate">
-                {getCollectionNames(collectionIds).join(', ')}
-                {collectionIds.length > 2 && ` +${collectionIds.length - 2}`}
-              </span>
+          {/* Badges for no-image cards */}
+          {!hasImage && (
+            <div className="flex gap-1 flex-shrink-0">
+              {showPrivacyBadge && <WishBadge type="private" size="sm" />}
+              {showReservedBadge && <WishBadge type="reserved" size="sm" />}
             </div>
           )}
         </div>
+
+        {/* Description - italicized and smaller */}
+        {description && (
+          <p className={cn(
+            'text-muted-foreground italic leading-relaxed line-clamp-2',
+            hasImage ? 'text-sm' : 'text-xs'
+          )}>
+            {description}
+          </p>
+        )}
+
+        {/* Bottom section - Score, timestamp, and actions */}
+        <div className="flex items-center justify-between mt-auto pt-2">
+          {/* Desire Score - no fractions */}
+          <div className="flex items-center gap-2">
+            <WishScore
+              score={displayScore}
+              variant="hearts"
+              size="sm"
+              interactive={false}
+              showLabel={false}
+            />
+            <span className="text-xs text-muted-foreground font-medium">
+              {displayScore}/10
+            </span>
+          </div>
+
+          {/* Timestamp - generalized format */}
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Calendar className="w-3 h-3" />
+            <span>{formatTimestamp(createdAt)}</span>
+          </div>
+        </div>
+
+        {/* Dibs Control for friends */}
+        {showDibs && (
+          <div className="pt-2 border-t border-border/30">
+            <DibsControl
+              item={item}
+              currentUserId={currentUserId}
+              onDibsChange={onDibsChange}
+              size="sm"
+            />
+          </div>
+        )}
       </div>
+
+      {/* Link indicator - minimal, bottom-right corner */}
+      {link && (
+        <div className="absolute bottom-2 right-2">
+          <div className="w-2 h-2 bg-primary-500 rounded-full opacity-60"></div>
+        </div>
+      )}
+
+      {/* Selection overlay */}
+      {selected && (
+        <div className="absolute inset-0 bg-primary-500/10 pointer-events-none" />
+      )}
     </motion.div>
   );
 });
