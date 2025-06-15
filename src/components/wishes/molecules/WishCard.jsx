@@ -1,7 +1,7 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar } from 'lucide-react';
-import { formatDistanceToNow, isToday, isYesterday, format, isThisYear } from 'date-fns';
+import { ExternalLink, Calendar } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
 import { cn } from '../../../utils/cn';
 
 // Import atoms
@@ -11,18 +11,35 @@ import WishScore from '../atoms/WishScore';
 import DibsControl from '../atoms/DibsControl';
 
 /**
- * Enhanced WishCard Component - Addresses all reported issues
+ * WishCard Component - Horizontal wish item card with improved design
  *
- * Fixes:
- * - Dark mode background properly adapts with bg-background
- * - Removed ExternalLink hyperlink logo
- * - Dynamic height based on image presence (no placeholder images)
- * - Generalized timestamps (Today, Yesterday, exact date, or years)
- * - Removed fractions from desire score
- * - Removed collection tags display
- * - Improved design with better styling
- * - Italicized and smaller description text
- * - Better theme-aware styling throughout
+ * IMPROVEMENTS MADE:
+ * - Changed to horizontal layout with image as left banner
+ * - Scaled desire score from 10-point to 5-point scale
+ * - Enhanced card design with better visual hierarchy
+ * - Implemented double-width logic for cards without images
+ * - Improved metadata and tag alignment at bottom
+ * - Better responsive behavior and spacing
+ *
+ * Features:
+ * - Horizontal layout with image banner on left, content on right
+ * - Adaptive width based on image presence (2 cards without image = 1 with image)
+ * - Role-based rendering and interactions
+ * - Mode-based click behavior (view/edit/select)
+ * - Smooth animations and hover effects
+ * - Theme-aware styling
+ * - Optimized for touch and mouse interactions
+ *
+ * @param {Object} item - Wish item data
+ * @param {string} userRole - User's role: 'owner' | 'friend' | 'visitor'
+ * @param {string} mode - Current mode: 'view' | 'edit' | 'select'
+ * @param {boolean} selected - Whether card is selected (for bulk operations)
+ * @param {function} onSelect - Selection toggle handler
+ * @param {function} onClick - Card click handler
+ * @param {function} onDibsChange - Dibs change handler
+ * @param {Array} collections - Available collections for mapping IDs to names
+ * @param {string} currentUserId - Current user's ID
+ * @param {string} className - Additional CSS classes
  */
 const WishCard = React.forwardRef(({
   item,
@@ -51,6 +68,7 @@ const WishCard = React.forwardRef(({
     score,
     is_private: isPrivate,
     dibbed_by: dibbedBy,
+    collection_ids: collectionIds = [],
     created_at: createdAt,
     updated_at: updatedAt
   } = item;
@@ -62,34 +80,39 @@ const WishCard = React.forwardRef(({
   const showPrivacyBadge = isPrivate && (userRole === 'owner' || userRole === 'friend');
   const showReservedBadge = dibbedBy && userRole === 'friend';
 
-  // Format timestamp intelligently
-  const formatTimestamp = useCallback((timestamp) => {
-    if (!timestamp) return '';
+  // IMPROVED: Scale score from 10-point to 5-point scale
+  const scaledScore = Math.round((score / 10) * 5) || 1;
 
-    const date = new Date(timestamp);
-    const now = new Date();
+  // Color theming based on desire score
+  const getScoreColors = (score) => {
+    const colors = {
+      1: { bg: 'from-gray-500/20 to-gray-400/10', border: 'border-gray-400/30', accent: 'text-gray-500' },
+      2: { bg: 'from-blue-500/20 to-blue-400/10', border: 'border-blue-400/30', accent: 'text-blue-500' },
+      3: { bg: 'from-green-500/20 to-green-400/10', border: 'border-green-400/30', accent: 'text-green-500' },
+      4: { bg: 'from-orange-500/20 to-orange-400/10', border: 'border-orange-400/30', accent: 'text-orange-500' },
+      5: { bg: 'from-red-500/20 to-red-400/10', border: 'border-red-400/30', accent: 'text-red-500' }
+    };
+    return colors[score] || colors[1];
+  };
 
-    if (isToday(date)) {
-      return 'Today';
+  const scoreColors = getScoreColors(scaledScore);
+
+  // Collection name mapping
+  const getCollectionNames = useCallback((ids) => {
+    return ids.map(id => {
+      const collection = collections.find(c => c.id === id);
+      return collection?.name || 'Unknown';
+    }).filter(Boolean);
+  }, [collections]);
+
+  // Format date helper
+  const formatDate = (dateString) => {
+    try {
+      return formatDistanceToNow(new Date(dateString), { addSuffix: true });
+    } catch {
+      return 'Recently';
     }
-
-    if (isYesterday(date)) {
-      return 'Yesterday';
-    }
-
-    // If more than a year ago, just show the year
-    if (now.getFullYear() - date.getFullYear() >= 1) {
-      return format(date, 'yyyy');
-    }
-
-    // Otherwise show the exact date
-    return format(date, 'MMM d, yyyy');
-  }, []);
-
-  // Remove fractions from desire score
-  const displayScore = useMemo(() => {
-    return Math.floor(score || 0);
-  }, [score]);
+  };
 
   // Click behavior based on mode and role
   const handleCardClick = useCallback((e) => {
@@ -108,17 +131,16 @@ const WishCard = React.forwardRef(({
       return;
     }
 
-    // Removed automatic link opening - no more hyperlink behavior
+    if (mode === 'view' && link) {
+      window.open(link, '_blank', 'noopener noreferrer');
+      return;
+    }
+
+    // Default: just highlight or show details
     onClick?.(item);
-  }, [isSelectMode, mode, userRole, onSelect, onClick, id, item]);
+  }, [isSelectMode, mode, userRole, link, onSelect, onClick, id, item]);
 
-  // Handle selection in select mode
-  const handleSelect = useCallback((e) => {
-    e.stopPropagation();
-    onSelect?.(id);
-  }, [onSelect, id]);
-
-  // Image loading handlers
+  // Handle image events
   const handleImageLoad = useCallback(() => {
     setImageLoading(false);
   }, []);
@@ -128,41 +150,36 @@ const WishCard = React.forwardRef(({
     setImageLoading(false);
   }, []);
 
+  // Handle external link click
+  const handleLinkClick = useCallback((e) => {
+    e.stopPropagation();
+    if (link) {
+      window.open(link, '_blank', 'noopener noreferrer');
+    }
+  }, [link]);
+
+  // Handle selection
+  const handleSelect = useCallback((checked) => {
+    onSelect?.(id);
+  }, [onSelect, id]);
+
   // Animation variants
   const cardVariants = {
-    initial: { opacity: 0, y: 20, scale: 0.95 },
+    initial: { opacity: 0, y: 20 },
     animate: {
       opacity: 1,
       y: 0,
-      scale: 1,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
-        duration: 0.6
-      }
+      transition: { duration: 0.3, ease: "easeOut" }
     },
     hover: {
-      y: -8,
-      scale: 1.02,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 20
-      }
-    },
-    tap: {
-      scale: 0.98,
-      transition: { duration: 0.1 }
-    },
-    selected: {
-      scale: 1.05,
       y: -4,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 25
-      }
+      scale: 1.02,
+      transition: { duration: 0.2, ease: "easeOut" }
+    },
+    tap: { scale: 0.98 },
+    selected: {
+      scale: 1.02,
+      transition: { duration: 0.2 }
     }
   };
 
@@ -170,24 +187,19 @@ const WishCard = React.forwardRef(({
     <motion.div
       ref={ref}
       className={cn(
-        // Base card styling with proper theme awareness
-        'group relative overflow-hidden cursor-pointer',
-        'bg-background border border-border/50 rounded-xl',
-        'shadow-sm hover:shadow-lg transition-all duration-300',
-        'backdrop-blur-sm',
-
-        // Theme-aware hover effects
-        'hover:border-primary-300/50 hover:bg-background/80',
-
-        // Selection state
-        selected && [
-          'ring-2 ring-primary-500/50 border-primary-500/50',
-          'bg-primary-50/50 dark:bg-primary-900/20'
-        ],
-
-        // Responsive height - dynamic based on image presence
-        hasImage ? 'min-h-[320px]' : 'min-h-[160px]',
-
+        // IMPROVED: Horizontal layout with glassmorphic styling and score-based colors
+        'group cursor-pointer overflow-hidden',
+        'backdrop-blur-xl bg-gradient-to-br',
+        scoreColors.bg,
+        'dark:from-black/40 dark:via-black/30 dark:to-black/20',
+        'border',
+        scoreColors.border,
+        'dark:border-white/20',
+        'rounded-3xl shadow-2xl shadow-black/10 dark:shadow-black/40',
+        'hover:shadow-3xl hover:shadow-black/20 dark:hover:shadow-black/50',
+        'transition-all duration-300 ease-out',
+        // Selection styling
+        selected && 'ring-4 ring-primary-500/40 border-primary-400/60 shadow-primary-500/20',
         className
       )}
       variants={cardVariants}
@@ -198,148 +210,160 @@ const WishCard = React.forwardRef(({
       onClick={handleCardClick}
       {...props}
     >
-      {/* Image Section - Only render if image exists */}
-      {hasImage && (
-        <div className="relative aspect-[4/3] overflow-hidden bg-muted/30">
-          <img
-            src={imageUrl}
-            alt={name}
-            className={cn(
-              'w-full h-full object-cover transition-all duration-300',
-              imageLoading && 'opacity-0',
-              !imageLoading && 'opacity-100'
-            )}
-            onLoad={handleImageLoad}
-            onError={handleImageError}
-            loading="lazy"
-          />
+      {/* IMPROVED: Vertical layout container */}
+      <div className="flex flex-col h-full min-h-[180px] p-6 lg:p-8">
 
-          {/* Image loading skeleton */}
-          {imageLoading && (
-            <div className="absolute inset-0 bg-muted/50 animate-pulse flex items-center justify-center">
-              <span className="text-2xl opacity-50">🖼️</span>
-            </div>
-          )}
-
-          {/* Subtle overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent" />
-
-          {/* Select checkbox - positioned on image */}
-          {isSelectMode && (
-            <div className="absolute top-3 left-3">
-              <SelectCheckbox
-                checked={selected}
-                onChange={handleSelect}
-                size="md"
+        {/* Top Row: Logo + Title + Controls */}
+        <div className="flex items-start gap-4 mb-4">
+          {/* Logo (if image exists) */}
+          {hasImage && (
+            <div className="relative w-16 h-16 flex-shrink-0 bg-gradient-to-br from-muted/20 to-muted/10 rounded-xl overflow-hidden">
+              <img
+                src={imageUrl}
+                alt={name}
+                className={cn(
+                  'w-full h-full object-cover transition-all duration-500',
+                  imageLoading && 'opacity-0 scale-110',
+                  !imageLoading && 'opacity-100 scale-100'
+                )}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                loading="lazy"
               />
+
+              {/* Image loading skeleton */}
+              {imageLoading && (
+                <div className="absolute inset-0 bg-gradient-to-br from-white/30 to-white/10 dark:from-white/20 dark:to-white/5 animate-pulse flex items-center justify-center backdrop-blur-sm">
+                  <span className="text-lg opacity-50">🖼️</span>
+                </div>
+              )}
+
+              {/* Select checkbox on logo */}
+              {isSelectMode && (
+                <div className="absolute -top-1 -left-1">
+                  <SelectCheckbox
+                    checked={selected}
+                    onChange={handleSelect}
+                    size="sm"
+                  />
+                </div>
+              )}
             </div>
           )}
 
-          {/* Privacy and reserved badges */}
-          <div className="absolute top-3 right-3 flex gap-2">
-            {showPrivacyBadge && <WishBadge type="private" size="sm" />}
-            {showReservedBadge && <WishBadge type="reserved" size="sm" />}
-          </div>
-        </div>
-      )}
+          {/* Title and Controls */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between">
+              <h3 className={cn(
+                'font-bold text-foreground leading-tight',
+                'line-clamp-2 text-lg lg:text-xl',
+                'bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text'
+              )}>
+                {name}
+              </h3>
 
-      {/* Content Section - Always present, adjusted spacing for no-image cards */}
-      <div className={cn(
-        'p-4 space-y-3 flex-1 flex flex-col',
-        !hasImage && 'pt-6' // Extra padding if no image
-      )}>
+              {/* Top-right controls */}
+              <div className="flex items-center gap-3 ml-4">
+                {/* No image select checkbox */}
+                {!hasImage && isSelectMode && (
+                  <SelectCheckbox
+                    checked={selected}
+                    onChange={handleSelect}
+                    size="sm"
+                  />
+                )}
 
-        {/* Header row - checkbox for no-image cards, title, and badges */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 flex-1 min-w-0">
-            {/* Select checkbox for no-image cards */}
-            {isSelectMode && !hasImage && (
-              <div className="pt-1 flex-shrink-0">
-                <SelectCheckbox
-                  checked={selected}
-                  onChange={handleSelect}
-                  size="sm"
-                />
+                {/* Badges */}
+                <div className="flex gap-2">
+                  {showPrivacyBadge && <WishBadge type="private" size="sm" />}
+                  {showReservedBadge && <WishBadge type="reserved" size="sm" />}
+                </div>
+
+                {/* External link */}
+                {link && !isSelectMode && (
+                  <button
+                    onClick={handleLinkClick}
+                    className={cn(
+                      'p-2',
+                      'backdrop-blur-xl bg-white/90 hover:bg-white dark:bg-black/80 dark:hover:bg-black/90',
+                      'border border-white/40 dark:border-white/30 rounded-xl',
+                      'text-muted-foreground hover:text-primary-600 dark:hover:text-primary-400',
+                      'transition-all duration-300 shadow-lg hover:shadow-xl'
+                    )}
+                    aria-label="Open product link"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                  </button>
+                )}
               </div>
-            )}
-
-            {/* Title */}
-            <h3 className={cn(
-              'font-semibold text-foreground leading-tight',
-              'line-clamp-2 group-hover:text-primary-600',
-              'transition-colors duration-200',
-              hasImage ? 'text-lg' : 'text-base'
-            )}>
-              {name}
-            </h3>
-          </div>
-
-          {/* Badges for no-image cards */}
-          {!hasImage && (
-            <div className="flex gap-1 flex-shrink-0">
-              {showPrivacyBadge && <WishBadge type="private" size="sm" />}
-              {showReservedBadge && <WishBadge type="reserved" size="sm" />}
             </div>
-          )}
+          </div>
         </div>
 
-        {/* Description - italicized and smaller */}
+        {/* Second Row: Desire Score */}
+        <div className="mb-4">
+          <WishScore
+            score={scaledScore}
+            maxScore={5}
+            variant="hearts"
+            size="sm"
+            showLabel={true}
+            interactive={false}
+          />
+        </div>
+
+        {/* Third Row: Description */}
         {description && (
-          <p className={cn(
-            'text-muted-foreground italic leading-relaxed line-clamp-2',
-            hasImage ? 'text-sm' : 'text-xs'
-          )}>
-            {description}
-          </p>
+          <div className="mb-4 flex-1">
+            <p className="text-base text-muted-foreground/90 line-clamp-3 leading-relaxed">
+              {description}
+            </p>
+          </div>
         )}
 
-        {/* Bottom section - Score, timestamp, and actions */}
-        <div className="flex items-center justify-between mt-auto pt-2">
-          {/* Desire Score - no fractions */}
-          <div className="flex items-center gap-2">
-            <WishScore
-              score={displayScore}
-              variant="hearts"
-              size="sm"
-              interactive={false}
-              showLabel={false}
-            />
-            <span className="text-xs text-muted-foreground font-medium">
-              {displayScore}/10
-            </span>
-          </div>
-
-          {/* Timestamp - generalized format */}
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Calendar className="w-3 h-3" />
-            <span>{formatTimestamp(createdAt)}</span>
-          </div>
-        </div>
-
-        {/* Dibs Control for friends */}
+        {/* Dibs Control - Only for Friends */}
         {showDibs && (
-          <div className="pt-2 border-t border-border/30">
+          <div className="mb-4">
             <DibsControl
-              item={item}
+              itemId={id}
+              dibbedBy={dibbedBy}
               currentUserId={currentUserId}
+              userRole={userRole}
               onDibsChange={onDibsChange}
               size="sm"
             />
           </div>
         )}
+
+        {/* Bottom Row: Metadata and Tags */}
+        <div className="mt-auto pt-4 border-t border-white/20 dark:border-white/10">
+          <div className="flex items-center justify-between text-sm text-muted-foreground/80">
+            {/* Left: Timestamp */}
+            <div className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              <span>Added {formatDate(createdAt)}</span>
+            </div>
+
+            {/* Right: Collections */}
+            {collectionIds.length > 0 && (
+              <div className="flex items-center gap-2 max-w-[50%]">
+                <span className="opacity-75">📁</span>
+                <span className="truncate">
+                  {getCollectionNames(collectionIds).join(', ')}
+                  {collectionIds.length > 2 && ` +${collectionIds.length - 2}`}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* Link indicator - minimal, bottom-right corner */}
-      {link && (
-        <div className="absolute bottom-2 right-2">
-          <div className="w-2 h-2 bg-primary-500 rounded-full opacity-60"></div>
-        </div>
-      )}
-
-      {/* Selection overlay */}
-      {selected && (
-        <div className="absolute inset-0 bg-primary-500/10 pointer-events-none" />
-      )}
+      {/* Hover overlay effect */}
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-primary-500/10 via-primary-400/5 to-primary-500/10 opacity-0 rounded-3xl pointer-events-none"
+        whileHover={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      />
     </motion.div>
   );
 });

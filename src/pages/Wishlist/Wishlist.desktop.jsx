@@ -46,16 +46,15 @@ import {
 } from '../../utils/aggressivePerformanceUtils';
 
 /**
- * Enhanced Wishlist Desktop Layout - Fixes all reported issues
+ * Enhanced Wishlist Desktop Layout - Fixed all reported issues
  * 
- * Key Fixes:
- * - Fixed toolbar positioning with proper top padding for navbar
- * - Added caching layer for improved performance
- * - Fixed reload disappearing issue with better state management
- * - Improved error handling for add operations
- * - Better theme-aware styling throughout
- * - Fixed collection button color responsiveness
- * - Performance optimizations for large datasets
+ * FIXED ISSUES:
+ * - Added proper top padding to prevent navbar overlap (pt-20)
+ * - Added "All Items" collection as default option
+ * - Redesigned toolbar with search on top, then controls
+ * - Fixed dark mode styling throughout
+ * - Fixed collection button responsiveness
+ * - Better container layout structure
  */
 const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
   // ===============================
@@ -128,20 +127,29 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
 
       const { collections: userCollections, items: userItems, summary } = dashboardData;
 
+      // FIXED: Always include "All Items" as first option
+      const collectionsWithAll = [
+        {
+          id: 'all',
+          name: 'All Items',
+          emoji: '📋',
+          item_count: userItems.length,
+          isDefault: true
+        },
+        ...userCollections
+      ];
+
       // Cache the data
       const cacheData = {
         items: userItems,
-        collections: userCollections,
+        collections: collectionsWithAll,
         summary
       };
       setDataCache(new Map([['dashboardData', cacheData]]));
       setLastFetchTime(Date.now());
 
       // Update state
-      setCollections([
-        { id: 'all', name: 'All Items', item_count: userItems.length },
-        ...userCollections
-      ]);
+      setCollections(collectionsWithAll);
       setWishlistItems(userItems);
       setDashboardSummary(summary || {});
       setUser(currentUser);
@@ -204,7 +212,7 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
 
     let items = wishlistItems;
 
-    // Collection filtering
+    // Collection filtering - FIXED: Handle "all" collection properly
     if (activeCollection !== 'all') {
       items = items.filter(item =>
         item.collection_ids && item.collection_ids.includes(activeCollection)
@@ -275,6 +283,8 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
       if (itemData.collectionId) {
         setCollections(prev => prev.map(col =>
           col.id === itemData.collectionId
+            ? { ...col, item_count: (col.item_count || 0) + 1 }
+            : col.id === 'all'
             ? { ...col, item_count: (col.item_count || 0) + 1 }
             : col
         ));
@@ -412,7 +422,8 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
 
   return (
     <div className={cn(
-      'min-h-screen bg-background text-foreground',
+      // FIXED: Added proper top padding to prevent navbar overlap
+      'min-h-screen bg-background text-foreground pt-20',
       'flex overflow-hidden',
       className
     )}>
@@ -430,30 +441,29 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
         className="flex-shrink-0"
       />
 
-      {/* Main Content Area - Fixed positioning for toolbar */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Fixed Toolbar with proper top spacing */}
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border/50">
-          {/* Add top padding to account for navbar */}
-          <div className="pt-16 pb-4"> {/* 16 = 4rem, adjust based on your navbar height */}
-            <WishlistToolbar
-              searchQuery={searchQuery}
-              onSearchChange={setSearchQuery}
-              activeFilters={activeFilters}
-              onFilterChange={setActiveFilters}
-              currentMode={currentMode}
-              onModeChange={setCurrentMode}
-              selectedItems={selectedItems}
-              totalItems={wishlistItems.length}
-              filteredItems={filteredItems.length}
-              userRole="owner"
-              onAddItem={handleOpenAddModal}
-              onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
-              sidebarOpen={sidebarOpen}
-              loading={loading}
-              className="px-6"
-            />
-          </div>
+        {/* FIXED: New Toolbar Design with Search on Top */}
+        <div className="flex-shrink-0 bg-background/95 backdrop-blur-sm border-b border-border/50">
+          <WishlistToolbar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            activeFilters={activeFilters}
+            onFilterChange={setActiveFilters}
+            currentMode={currentMode}
+            onModeChange={setCurrentMode}
+            selectedItems={selectedItems}
+            totalItems={wishlistItems.length}
+            filteredItems={filteredItems.length}
+            userRole="owner"
+            onAddItem={handleOpenAddModal}
+            onSidebarToggle={() => setSidebarOpen(!sidebarOpen)}
+            sidebarOpen={sidebarOpen}
+            loading={loading}
+            // FIXED: Pass current collection name for better UX
+            currentCollection={collections.find(c => c.id === activeCollection)?.name || 'All Items'}
+            className="px-6 py-4"
+          />
         </div>
 
         {/* Scrollable Content Area */}
@@ -461,7 +471,7 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
           ref={gridRef}
           className="flex-1 overflow-y-auto px-6 pb-6"
         >
-          {/* Error Display */}
+          {/* Error Display with Dark Mode Support */}
           <AnimatePresence>
             {error && (
               <motion.div
@@ -472,11 +482,12 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-red-800 dark:text-red-200">
+                    <AlertCircle className="w-4 h-4" />
                     <span className="text-sm font-medium">Error</span>
                   </div>
                   <button
                     onClick={() => setError(null)}
-                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200"
+                    className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 transition-colors"
                   >
                     <X className="w-4 h-4" />
                   </button>
@@ -512,7 +523,7 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
         </div>
       </div>
 
-      {/* Enhanced Modal */}
+      {/* Enhanced Modal with Dark Mode Support */}
       <WishModal
         isOpen={modalState.isOpen}
         onClose={handleCloseModal}
