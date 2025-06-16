@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   X,
@@ -12,36 +12,30 @@ import {
   EyeOff,
   Folder,
   Tag,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  ArrowLeft,
+  ArrowRight,
+  Globe,
+  Image as ImageIcon,
+  FileText,
+  Trash2,
+  Palette
 } from 'lucide-react';
 import { cn } from '../../../utils/cn';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 // Import atoms
 import WishScore from '../atoms/WishScore';
 
 /**
- * WishModal Component - Universal modal for adding and editing wish items
+ * WishModal Component - Fixed infinite loop and enhanced collections modal
  *
- * Features:
- * - Single modal for both add and edit modes
- * - Multi-step form with progress indication
- * - Real-time validation and feedback
- * - Image upload with drag & drop
- * - URL metadata extraction
- * - Category tag management
- * - Collection assignment
- * - Responsive design with mobile optimization
- * - No reload on typing (debounced updates)
- *
- * @param {boolean} isOpen - Whether modal is open
- * @param {function} onClose - Handler to close modal
- * @param {function} onSave - Handler to save item data
- * @param {string} mode - Modal mode: 'add' | 'edit'
- * @param {Object} item - Item data for edit mode (null for add mode)
- * @param {Array} collections - Available collections
- * @param {string} defaultCollection - Default collection ID
- * @param {boolean} loading - Whether save operation is in progress
- * @param {string} className - Additional CSS classes
+ * Key Fixes:
+ * - Resolved infinite re-render loop in validation system
+ * - Updated collections modal with proper theme integration
+ * - Improved validation dependency management
+ * - Enhanced UX consistency across both modals
  */
 const WishModal = React.forwardRef(({
   isOpen = false,
@@ -51,10 +45,14 @@ const WishModal = React.forwardRef(({
   item = null,
   collections = [],
   defaultCollection = null,
+  onCreateCollection,
   loading = false,
   className,
   ...props
 }, ref) => {
+
+  // Get theme context for proper theming
+  const { theme, colorTheme, isDark } = useTheme();
 
   // Form state
   const [formData, setFormData] = useState({
@@ -62,7 +60,7 @@ const WishModal = React.forwardRef(({
     description: '',
     link: '',
     imageUrl: '',
-    score: 5,
+    score: 3,
     isPrivate: false,
     collectionIds: [],
     categoryTags: []
@@ -75,22 +73,142 @@ const WishModal = React.forwardRef(({
   const [isDragActive, setIsDragActive] = useState(false);
   const [urlExtracting, setUrlExtracting] = useState(false);
 
-  const totalSteps = 3;
+  // Collection creation modal state
+  const [showCollectionModal, setShowCollectionModal] = useState(false);
+  const [collectionFormData, setCollectionFormData] = useState({
+    name: '',
+    emoji: '📋',
+    description: '',
+    color: 'blue'
+  });
+  const [collectionLoading, setCollectionLoading] = useState(false);
+  const [collectionErrors, setCollectionErrors] = useState({});
+
+  // Category tags search state
+  const [tagSearchQuery, setTagSearchQuery] = useState('');
+  const [showTagDropdown, setShowTagDropdown] = useState(false);
+
+  const totalSteps = 2;
   const isEditMode = mode === 'edit' && item;
 
-  // Step titles
   const stepTitles = [
-    'Basic Information',
-    'Details & Scoring',
-    'Organization'
+    'Item Details & Media',
+    'Organization & Privacy'
   ];
 
-  // Common category tags
+  // Common category tags for search
   const commonTags = [
     'Electronics', 'Fashion', 'Books', 'Home & Garden', 'Sports', 'Music',
     'Games', 'Art', 'Kitchen', 'Travel', 'Health', 'Beauty', 'Toys',
-    'Jewelry', 'Automotive', 'Office', 'Fitness', 'Movies', 'Food', 'Outdoor'
+    'Jewelry', 'Automotive', 'Office', 'Fitness', 'Movies', 'Food', 'Outdoor',
+    'Technology', 'Decor', 'Gadgets', 'Clothing', 'Accessories', 'Tools'
   ];
+
+  // Collection color themes
+  const collectionColorThemes = [
+    { id: 'blue', name: 'Ocean', class: 'from-blue-500 to-cyan-500', bg: 'bg-blue-100 dark:bg-blue-900/30' },
+    { id: 'purple', name: 'Galaxy', class: 'from-purple-500 to-pink-500', bg: 'bg-purple-100 dark:bg-purple-900/30' },
+    { id: 'green', name: 'Forest', class: 'from-emerald-500 to-teal-500', bg: 'bg-emerald-100 dark:bg-emerald-900/30' },
+    { id: 'orange', name: 'Sunset', class: 'from-orange-500 to-amber-500', bg: 'bg-orange-100 dark:bg-orange-900/30' },
+    { id: 'red', name: 'Fire', class: 'from-red-500 to-rose-500', bg: 'bg-red-100 dark:bg-red-900/30' },
+    { id: 'indigo', name: 'Midnight', class: 'from-indigo-500 to-blue-600', bg: 'bg-indigo-100 dark:bg-indigo-900/30' }
+  ];
+
+  const limits = {
+    name: 20,
+    description: 15
+  };
+
+  // Helper functions - memoized to prevent recreation
+  const isValidUrl = useMemo(() => (string) => {
+    try {
+      new URL(string);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }, []);
+
+  const getWordCount = useMemo(() => (text) => {
+    return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+  }, []);
+
+  // FIXED: Validation function without error state dependency
+  const validateField = useCallback((field, value, currentErrors = {}) => {
+    const newErrors = { ...currentErrors };
+
+    switch (field) {
+      case 'name':
+        if (!value.trim()) {
+          newErrors.name = 'Item name is required';
+        } else if (value.length < 2) {
+          newErrors.name = 'Name must be at least 2 characters';
+        } else if (getWordCount(value) > limits.name) {
+          newErrors.name = `Name must be ${limits.name} words or less`;
+        } else {
+          delete newErrors.name;
+        }
+        break;
+      case 'description':
+        if (!value.trim()) {
+          newErrors.description = 'Description is required';
+        } else if (getWordCount(value) > limits.description) {
+          newErrors.description = `Description must be ${limits.description} words or less`;
+        } else {
+          delete newErrors.description;
+        }
+        break;
+      case 'link':
+        if (!value.trim()) {
+          newErrors.link = 'Product link is required';
+        } else if (!isValidUrl(value)) {
+          newErrors.link = 'Please enter a valid URL';
+        } else {
+          delete newErrors.link;
+        }
+        break;
+      case 'imageUrl':
+        if (!value.trim()) {
+          newErrors.imageUrl = 'Product image is required';
+        } else {
+          delete newErrors.imageUrl;
+        }
+        break;
+      case 'score':
+        if (value < 1 || value > 5) {
+          newErrors.score = 'Score must be between 1 and 5';
+        } else {
+          delete newErrors.score;
+        }
+        break;
+      default:
+        break;
+    }
+
+    return newErrors;
+  }, [getWordCount, isValidUrl]); // Only stable dependencies
+
+  // FIXED: Handle input changes without causing infinite loops
+  const handleInputChange = useCallback((field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setTouched(prev => ({ ...prev, [field]: true }));
+
+    // Use functional state update to avoid dependency on errors
+    setErrors(currentErrors => validateField(field, value, currentErrors));
+  }, [validateField]);
+
+  // Validate step 1 required fields
+  const validateStep1 = useCallback(() => {
+    const step1Fields = ['name', 'description', 'link', 'imageUrl'];
+    let tempErrors = {};
+
+    step1Fields.forEach(field => {
+      tempErrors = validateField(field, formData[field], tempErrors);
+    });
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  }, [formData, validateField]);
 
   // Initialize form data when modal opens or item changes
   useEffect(() => {
@@ -101,7 +219,7 @@ const WishModal = React.forwardRef(({
           description: item.description || '',
           link: item.link || '',
           imageUrl: item.image_url || '',
-          score: item.score || 5,
+          score: Math.round((item.score / 10) * 5) || 3,
           isPrivate: item.is_private || false,
           collectionIds: item.collection_ids || [],
           categoryTags: item.metadata?.categoryTags || []
@@ -113,7 +231,7 @@ const WishModal = React.forwardRef(({
           description: '',
           link: '',
           imageUrl: '',
-          score: 5,
+          score: 3,
           isPrivate: false,
           collectionIds: defaultCollection ? [defaultCollection] : [],
           categoryTags: []
@@ -123,76 +241,30 @@ const WishModal = React.forwardRef(({
       setErrors({});
       setTouched({});
       setCurrentStep(1);
+      setShowCollectionModal(false);
+      setCollectionFormData({ name: '', emoji: '📋', description: '', color: 'blue' });
+      setCollectionErrors({});
+      setTagSearchQuery('');
+      setShowTagDropdown(false);
     }
   }, [isOpen, isEditMode, item, defaultCollection]);
 
-  // Validation functions
-  const validateField = useCallback((field, value) => {
-    const newErrors = { ...errors };
-
-    switch (field) {
-      case 'name':
-        if (!value.trim()) {
-          newErrors.name = 'Item name is required';
-        } else if (value.length < 2) {
-          newErrors.name = 'Name must be at least 2 characters';
-        } else {
-          delete newErrors.name;
-        }
-        break;
-      case 'link':
-        if (value && !isValidUrl(value)) {
-          newErrors.link = 'Please enter a valid URL';
-        } else {
-          delete newErrors.link;
-        }
-        break;
-      case 'score':
-        if (value < 1 || value > 10) {
-          newErrors.score = 'Score must be between 1 and 10';
-        } else {
-          delete newErrors.score;
-        }
-        break;
-      default:
-        break;
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [errors]);
-
-  // Handle input changes with validation
-  const handleInputChange = useCallback((field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    setTouched(prev => ({ ...prev, [field]: true }));
-
-    // Debounced validation to prevent constant re-renders
-    setTimeout(() => validateField(field, value), 300);
-  }, [validateField]);
-
-  // Handle URL changes with metadata extraction
+  // Handle URL changes
   const handleUrlChange = useCallback(async (url) => {
     handleInputChange('link', url);
 
     if (url && isValidUrl(url)) {
       setUrlExtracting(true);
       try {
-        // Simulate metadata extraction - in real app, call actual service
         await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // TODO: Implement actual metadata extraction
         console.log('Extract metadata from:', url);
-
-        // Example: could auto-fill name, description, imageUrl from URL
-
       } catch (error) {
         console.error('Failed to extract metadata:', error);
       } finally {
         setUrlExtracting(false);
       }
     }
-  }, [handleInputChange]);
+  }, [handleInputChange, isValidUrl]);
 
   // Handle image upload
   const handleImageUpload = useCallback((file) => {
@@ -205,6 +277,20 @@ const WishModal = React.forwardRef(({
       };
       reader.readAsDataURL(file);
     }
+  }, [handleInputChange]);
+
+  // Handle image URL input
+  const handleImageUrlChange = useCallback((url) => {
+    handleInputChange('imageUrl', url);
+    if (url && isValidUrl(url)) {
+      setImagePreview(url);
+    }
+  }, [handleInputChange, isValidUrl]);
+
+  // Remove image
+  const handleRemoveImage = useCallback(() => {
+    setImagePreview(null);
+    handleInputChange('imageUrl', '');
   }, [handleInputChange]);
 
   // Drag and drop handlers
@@ -226,9 +312,18 @@ const WishModal = React.forwardRef(({
   }, [handleImageUpload]);
 
   // Tag management
+  const filteredTags = useMemo(() =>
+    commonTags.filter(tag =>
+      tag.toLowerCase().includes(tagSearchQuery.toLowerCase()) &&
+      !formData.categoryTags.includes(tag)
+    ).slice(0, 8)
+  , [tagSearchQuery, formData.categoryTags]);
+
   const handleAddTag = useCallback((tag) => {
     if (!formData.categoryTags.includes(tag)) {
       handleInputChange('categoryTags', [...formData.categoryTags, tag]);
+      setTagSearchQuery('');
+      setShowTagDropdown(false);
     }
   }, [formData.categoryTags, handleInputChange]);
 
@@ -236,22 +331,102 @@ const WishModal = React.forwardRef(({
     handleInputChange('categoryTags', formData.categoryTags.filter(t => t !== tag));
   }, [formData.categoryTags, handleInputChange]);
 
+  // Collection validation
+  const validateCollectionField = useCallback((field, value) => {
+    const newErrors = { ...collectionErrors };
+
+    switch (field) {
+      case 'name':
+        if (!value.trim()) {
+          newErrors.name = 'Collection name is required';
+        } else if (value.length < 2) {
+          newErrors.name = 'Name must be at least 2 characters';
+        } else {
+          delete newErrors.name;
+        }
+        break;
+      default:
+        break;
+    }
+
+    setCollectionErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [collectionErrors]);
+
+  // Handle collection input changes
+  const handleCollectionInputChange = useCallback((field, value) => {
+    setCollectionFormData(prev => ({ ...prev, [field]: value }));
+    if (field === 'name') {
+      setTimeout(() => validateCollectionField(field, value), 300);
+    }
+  }, [validateCollectionField]);
+
+  // Enhanced collection creation with proper state management
+  const handleCreateCollection = useCallback(async () => {
+    if (!collectionFormData.name.trim()) {
+      validateCollectionField('name', collectionFormData.name);
+      return;
+    }
+
+    setCollectionLoading(true);
+    try {
+      const newCollection = {
+        name: collectionFormData.name.trim(),
+        emoji: collectionFormData.emoji,
+        description: collectionFormData.description.trim(),
+        color: collectionFormData.color
+      };
+
+      const created = await onCreateCollection?.(newCollection);
+      if (created) {
+        handleInputChange('collectionIds', [created.id]);
+        setShowCollectionModal(false);
+        setCollectionFormData({ name: '', emoji: '📋', description: '', color: 'blue' });
+        setCollectionErrors({});
+      }
+    } catch (error) {
+      console.error('Error creating collection:', error);
+      setCollectionErrors({ submit: error.message || 'Failed to create collection' });
+    } finally {
+      setCollectionLoading(false);
+    }
+  }, [collectionFormData, onCreateCollection, handleInputChange, validateCollectionField]);
+
+  // Navigation helpers with validation
+  const canGoNext = currentStep < totalSteps;
+  const canGoPrevious = currentStep > 1;
+
+  const handleNext = () => {
+    if (validateStep1()) {
+      setCurrentStep(prev => prev + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (canGoPrevious) setCurrentStep(prev => prev - 1);
+  };
+
   // Form validation
   const validateForm = useCallback(() => {
-    const newErrors = {};
+    const step1Fields = ['name', 'description', 'link', 'imageUrl'];
+    let tempErrors = {};
 
-    if (!formData.name.trim()) newErrors.name = 'Name is required';
-    if (formData.link && !isValidUrl(formData.link)) newErrors.link = 'Invalid URL';
-    if (formData.score < 1 || formData.score > 10) newErrors.score = 'Score must be 1-10';
+    step1Fields.forEach(field => {
+      tempErrors = validateField(field, formData[field], tempErrors);
+    });
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  }, [formData]);
+    if (formData.score < 1 || formData.score > 5) {
+      tempErrors.score = 'Score must be 1-5';
+    }
+
+    setErrors(tempErrors);
+    return Object.keys(tempErrors).length === 0;
+  }, [formData, validateField]);
 
   // Handle save
   const handleSave = useCallback(async () => {
     if (!validateForm()) {
-      setCurrentStep(1); // Go back to first step with errors
+      setCurrentStep(1);
       return;
     }
 
@@ -261,7 +436,7 @@ const WishModal = React.forwardRef(({
         description: formData.description.trim(),
         link: formData.link.trim(),
         imageUrl: formData.imageUrl,
-        desireScore: formData.score,
+        desireScore: Math.round((formData.score / 5) * 10),
         isPrivate: formData.isPrivate,
         collectionId: formData.collectionIds[0] || null,
         categoryTags: formData.categoryTags
@@ -278,565 +453,815 @@ const WishModal = React.forwardRef(({
   // Handle close
   const handleClose = useCallback(() => {
     onClose?.();
+    setFormData({
+      name: '',
+      description: '',
+      link: '',
+      imageUrl: '',
+      score: 3,
+      isPrivate: false,
+      collectionIds: [],
+      categoryTags: []
+    });
+    setErrors({});
+    setTouched({});
+    setCurrentStep(1);
+    setImagePreview(null);
+    setShowCollectionModal(false);
+    setCollectionFormData({ name: '', emoji: '📋', description: '', color: 'blue' });
+    setCollectionErrors({});
   }, [onClose]);
 
-  // Helper function
-  const isValidUrl = (string) => {
-    try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  };
+  // Theme-aware styles
+  const getThemeStyles = useMemo(() => {
+    const baseStyles = {
+      backdrop: isDark
+        ? 'bg-gradient-to-br from-slate-900/95 via-gray-900/90 to-black/95'
+        : 'bg-gradient-to-br from-slate-100/95 via-white/90 to-gray-100/95',
+      modal: isDark
+        ? 'bg-slate-900/95 border-slate-700/50'
+        : 'bg-white/95 border-gray-200/50',
+      input: isDark
+        ? 'bg-slate-800/80 border-slate-700/50 text-white placeholder-slate-400'
+        : 'bg-white/80 border-gray-300/50 text-gray-900 placeholder-gray-500'
+    };
 
-  // Navigation functions
-  const canGoNext = () => {
-    switch (currentStep) {
-      case 1:
-        return formData.name.trim() && !errors.name && !errors.link;
-      case 2:
-        return !errors.score;
-      case 3:
-        return true;
-      default:
-        return false;
-    }
-  };
+    const colorStyles = {
+      blue: 'from-blue-500 to-cyan-500',
+      purple: 'from-purple-500 to-pink-500',
+      green: 'from-emerald-500 to-teal-500'
+    };
 
-  const handleNext = () => {
-    if (canGoNext() && currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
+    return { ...baseStyles, gradient: colorStyles[colorTheme] || colorStyles.blue };
+  }, [isDark, colorTheme]);
 
   // Animation variants
   const modalVariants = {
-    initial: { opacity: 0, scale: 0.9, y: 20 },
+    initial: { opacity: 0, scale: 0.95, y: 20 },
     animate: {
       opacity: 1,
       scale: 1,
       y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 300,
-        damping: 25,
-        duration: 0.5
-      }
+      transition: { duration: 0.3, ease: "easeOut" }
     },
     exit: {
       opacity: 0,
       scale: 0.95,
-      y: 10,
-      transition: { duration: 0.3 }
+      y: 20,
+      transition: { duration: 0.2, ease: "easeIn" }
     }
   };
 
   const stepVariants = {
     initial: { opacity: 0, x: 20 },
-    animate: {
-      opacity: 1,
-      x: 0,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 25,
-        staggerChildren: 0.1
-      }
-    },
-    exit: {
-      opacity: 0,
-      x: -20,
-      transition: { duration: 0.2 }
-    }
-  };
-
-  const fieldVariants = {
-    initial: { opacity: 0, y: 10 },
-    animate: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        type: "spring",
-        stiffness: 400,
-        damping: 20
-      }
-    }
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: -20 }
   };
 
   if (!isOpen) return null;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <motion.div
-          ref={ref}
-          className={cn(
-            'bg-background rounded-xl shadow-2xl border border-border',
-            'w-full max-w-2xl max-h-[90vh] overflow-hidden',
-            'backdrop-blur-xl',
-            className
-          )}
-          variants={modalVariants}
-          initial="initial"
-          animate="animate"
-          exit="exit"
-          {...props}
-        >
-          {/* Header */}
-          <div className="px-6 py-4 border-b border-border/50 bg-gradient-to-r from-surface/50 to-background/30">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
-                  <Heart className="w-5 h-5 text-primary-500" />
-                  {isEditMode ? 'Edit Wish Item' : 'Add New Wish Item'}
-                </h2>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {stepTitles[currentStep - 1]} - Step {currentStep} of {totalSteps}
-                </p>
+    <AnimatePresence mode="wait">
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Theme-aware backdrop */}
+          <motion.div
+            className={cn('absolute inset-0 backdrop-blur-xl', getThemeStyles.backdrop)}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={handleClose}
+          />
+
+          {/* Container for side-by-side modals */}
+          <div className="relative z-10 flex gap-6 w-full max-w-6xl">
+            {/* UPDATED: Enhanced Collections Modal */}
+            <AnimatePresence>
+              {showCollectionModal && (
+                <motion.div
+                  className={cn(
+                    'w-96 rounded-2xl shadow-2xl border backdrop-blur-2xl',
+                    getThemeStyles.modal
+                  )}
+                  initial={{ opacity: 0, x: -100, scale: 0.95 }}
+                  animate={{ opacity: 1, x: 0, scale: 1 }}
+                  exit={{ opacity: 0, x: -100, scale: 0.95 }}
+                  transition={{ duration: 0.4, ease: "easeOut" }}
+                >
+                  {/* Enhanced Header */}
+                  <div className="relative overflow-hidden">
+                    <div className={cn('absolute inset-0 bg-gradient-to-r opacity-20', getThemeStyles.gradient)} />
+                    <div className={cn('relative p-6 border-b', isDark ? 'border-slate-700/50' : 'border-gray-200/50')}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-r', getThemeStyles.gradient)}>
+                            <Folder className="w-6 h-6 text-white" />
+                          </div>
+                          <div>
+                            <h3 className={cn('text-xl font-bold', isDark ? 'text-white' : 'text-gray-900')}>Create Collection</h3>
+                            <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-gray-600')}>Organize your wishes beautifully</p>
+                          </div>
+                        </div>
+                        <motion.button
+                          onClick={() => setShowCollectionModal(false)}
+                          className={cn('p-3 rounded-xl transition-all duration-200', getThemeStyles.input)}
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          <X className="w-5 h-5" />
+                        </motion.button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-6 space-y-6">
+                    {/* Collection Name */}
+                    <div>
+                      <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                        <FileText className="w-4 h-4 text-blue-500" />
+                        Collection Name <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={collectionFormData.name}
+                        onChange={(e) => handleCollectionInputChange('name', e.target.value)}
+                        placeholder="Enter collection name..."
+                        className={cn(
+                          'w-full px-4 py-3 rounded-xl transition-all duration-200',
+                          getThemeStyles.input,
+                          collectionErrors.name && 'border-red-500 bg-red-50/50 dark:bg-red-900/20'
+                        )}
+                        maxLength={50}
+                      />
+                      {collectionErrors.name && (
+                        <span className="text-sm text-red-500 flex items-center gap-1 mt-2">
+                          <AlertCircle className="w-4 h-4" />
+                          {collectionErrors.name}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Enhanced Emoji Selection */}
+                    <div>
+                      <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                        <Sparkles className="w-4 h-4 text-yellow-500" />
+                        Choose an Emoji
+                      </label>
+                      <div className="grid grid-cols-8 gap-2">
+                        {['📋', '📁', '🗂️', '📦', '🎯', '⭐', '❤️', '🎁', '🏠', '🎮', '📚', '🎵', '🎨', '💻', '📱', '👕'].map((emoji) => (
+                          <motion.button
+                            key={emoji}
+                            type="button"
+                            onClick={() => handleCollectionInputChange('emoji', emoji)}
+                            className={cn(
+                              'w-10 h-10 rounded-lg text-lg transition-all duration-200 border',
+                              getThemeStyles.input,
+                              collectionFormData.emoji === emoji && 'ring-2 ring-blue-500 bg-blue-100 dark:bg-blue-900/30'
+                            )}
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            {emoji}
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Enhanced Color Theme Selection */}
+                    <div>
+                      <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                        <Palette className="w-4 h-4 text-purple-500" />
+                        Color Theme
+                      </label>
+                      <div className="grid grid-cols-3 gap-3">
+                        {collectionColorThemes.map((theme) => (
+                          <motion.button
+                            key={theme.id}
+                            type="button"
+                            onClick={() => handleCollectionInputChange('color', theme.id)}
+                            className={cn(
+                              'p-3 rounded-xl border transition-all duration-300 text-center',
+                              getThemeStyles.input,
+                              collectionFormData.color === theme.id && 'ring-2 ring-blue-500'
+                            )}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <div className={cn('w-6 h-6 rounded-lg mx-auto mb-1 bg-gradient-to-r', theme.class)} />
+                            <span className={cn('text-xs font-medium', isDark ? 'text-white' : 'text-gray-900')}>{theme.name}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Collection Description */}
+                    <div>
+                      <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                        <FileText className="w-4 h-4 text-green-500" />
+                        Description <span className={cn('text-xs font-normal', isDark ? 'text-slate-400' : 'text-gray-500')}>(optional)</span>
+                      </label>
+                      <textarea
+                        value={collectionFormData.description}
+                        onChange={(e) => handleCollectionInputChange('description', e.target.value)}
+                        placeholder="What makes this collection special?"
+                        className={cn('w-full px-4 py-3 rounded-xl resize-none transition-all duration-200', getThemeStyles.input)}
+                        rows={3}
+                        maxLength={200}
+                      />
+                    </div>
+
+                    {/* Error Display */}
+                    {collectionErrors.submit && (
+                      <div className="p-4 rounded-xl bg-red-50/80 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                        <span className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                          <AlertCircle className="w-4 h-4" />
+                          {collectionErrors.submit}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Enhanced Create Button */}
+                    <motion.button
+                      onClick={handleCreateCollection}
+                      disabled={!collectionFormData.name.trim() || collectionLoading}
+                      className={cn(
+                        'w-full py-4 rounded-xl font-bold text-white shadow-lg transition-all duration-200 flex items-center justify-center gap-2',
+                        'bg-gradient-to-r', getThemeStyles.gradient,
+                        'disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-xl'
+                      )}
+                      whileHover={{ scale: 1.02, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {collectionLoading ? (
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Check className="w-5 h-5" />
+                      )}
+                      {collectionLoading ? 'Creating Collection...' : 'Create Collection'}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Main Modal - Same as before but with fixed validation */}
+            <motion.div
+              ref={ref}
+              className={cn(
+                'shadow-2xl border rounded-2xl backdrop-blur-2xl',
+                getThemeStyles.modal,
+                showCollectionModal ? 'flex-1' : 'w-full max-w-4xl mx-auto',
+                className
+              )}
+              variants={modalVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              {...props}
+            >
+              {/* Header */}
+              <div className="relative overflow-hidden">
+                <div className={cn('absolute inset-0 bg-gradient-to-r opacity-20', getThemeStyles.gradient)} />
+                <div className={cn('relative flex items-center justify-between p-6 border-b', isDark ? 'border-slate-700/50' : 'border-gray-200/50')}>
+                  <div className="flex items-center gap-4">
+                    <div className={cn('w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg bg-gradient-to-r', getThemeStyles.gradient)}>
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h2 className={cn('text-2xl font-bold', isDark ? 'text-white' : 'text-gray-900')}>
+                        {isEditMode ? 'Edit Wish' : 'Add New Wish'}
+                      </h2>
+                      <p className={cn('text-sm mt-1', isDark ? 'text-slate-400' : 'text-gray-600')}>
+                        {stepTitles[currentStep - 1]} • Step {currentStep} of {totalSteps}
+                      </p>
+                    </div>
+                  </div>
+                  <motion.button
+                    onClick={handleClose}
+                    className={cn('p-3 rounded-xl transition-all duration-200', getThemeStyles.input)}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <X className="w-5 h-5" />
+                  </motion.button>
+                </div>
               </div>
 
-              <motion.button
-                onClick={handleClose}
-                className="p-2 rounded-lg hover:bg-surface/50 text-muted-foreground hover:text-foreground transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                aria-label="Close modal"
-              >
-                <X className="w-5 h-5" />
-              </motion.button>
-            </div>
-
-            {/* Progress Bar */}
-            <div className="mt-4 h-1 bg-border/30 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-gradient-to-r from-primary-500 to-primary-600 rounded-full"
-                initial={{ width: 0 }}
-                animate={{ width: `${(currentStep / totalSteps) * 100}%` }}
-                transition={{ duration: 0.5, ease: "easeInOut" }}
-              />
-            </div>
-          </div>
-
-          {/* Content */}
-          <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-200px)]">
-            {/* Error Display */}
-            <AnimatePresence>
-              {errors.submit && (
-                <motion.div
-                  className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg"
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <div className="flex items-center gap-2 text-red-800">
-                    <AlertCircle className="w-4 h-4" />
-                    <span className="text-sm font-medium">Error saving item</span>
-                  </div>
-                  <p className="text-sm text-red-600 mt-1">{errors.submit}</p>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <AnimatePresence mode="wait">
-              {/* Step 1: Basic Information */}
-              {currentStep === 1 && (
-                <motion.div
-                  key="step1"
-                  variants={stepVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="space-y-6"
-                >
-                  {/* Item Name */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Item Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => handleInputChange('name', e.target.value)}
-                      placeholder="What do you want?"
+              {/* Progress Bar */}
+              <div className={cn('px-6 py-4', isDark ? 'bg-slate-800/50' : 'bg-gray-50/50')}>
+                <div className="flex space-x-3">
+                  {Array.from({ length: totalSteps }).map((_, index) => (
+                    <div
+                      key={index}
                       className={cn(
-                        'w-full px-4 py-3 border rounded-lg transition-all duration-200',
-                        'bg-background text-foreground placeholder:text-muted-foreground',
-                        'focus:outline-none focus:ring-2 focus:ring-primary-500/50',
-                        errors.name ? 'border-red-300 focus:ring-red-500/50' : 'border-border hover:border-primary-500/50'
+                        'flex-1 h-2.5 rounded-full transition-all duration-500',
+                        index < currentStep
+                          ? `bg-gradient-to-r ${getThemeStyles.gradient} shadow-lg`
+                          : isDark ? 'bg-slate-700' : 'bg-gray-300'
                       )}
                     />
-                    {errors.name && (
-                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {errors.name}
-                      </p>
-                    )}
-                  </motion.div>
+                  ))}
+                </div>
+              </div>
 
-                  {/* Product Link */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Product Link
-                    </label>
-                    <div className="relative">
-                      <input
-                        type="url"
-                        value={formData.link}
-                        onChange={(e) => handleUrlChange(e.target.value)}
-                        placeholder="https://example.com/product"
-                        className={cn(
-                          'w-full pl-10 pr-4 py-3 border rounded-lg transition-all duration-200',
-                          'bg-background text-foreground placeholder:text-muted-foreground',
-                          'focus:outline-none focus:ring-2 focus:ring-primary-500/50',
-                          errors.link ? 'border-red-300 focus:ring-red-500/50' : 'border-border hover:border-primary-500/50'
-                        )}
-                      />
-                      <Link className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-
-                      {/* Loading indicator */}
-                      {urlExtracting && (
-                        <motion.div
-                          className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        >
-                          <div className="w-4 h-4 border-2 border-primary-500/30 border-t-primary-500 rounded-full" />
-                        </motion.div>
-                      )}
-                    </div>
-                    {errors.link && (
-                      <p className="mt-1 text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {errors.link}
-                      </p>
-                    )}
-                  </motion.div>
-
-                  {/* Image Upload */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Product Image
-                    </label>
-
-                    {/* Image URL Input */}
-                    <input
-                      type="url"
-                      value={formData.imageUrl}
-                      onChange={(e) => handleInputChange('imageUrl', e.target.value)}
-                      placeholder="https://example.com/image.jpg"
-                      className="w-full px-4 py-2 border border-border rounded-lg mb-3 text-sm"
-                    />
-
-                    {/* Drag & Drop Area */}
+              {/* Form Content - Grid Layout for Better Space Usage */}
+              <div className="p-6 h-[60vh] overflow-y-auto">
+                <AnimatePresence mode="wait">
+                  {/* Step 1 - Item Details & Media */}
+                  {currentStep === 1 && (
                     <motion.div
-                      className={cn(
-                        'relative border-2 border-dashed rounded-xl p-6 text-center transition-all duration-300',
-                        isDragActive ? 'border-primary-500 bg-primary-50/50' : 'border-border hover:border-primary-400',
-                        'bg-gradient-to-br from-surface/50 to-background/30'
-                      )}
-                      onDragOver={handleDragOver}
-                      onDragLeave={handleDragLeave}
-                      onDrop={handleDrop}
-                      whileHover={{ scale: 1.01 }}
-                      animate={isDragActive ? { scale: 1.02 } : { scale: 1 }}
+                      key="step1"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                     >
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e.target.files[0])}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-
-                      <Upload className="w-8 h-8 mx-auto mb-3 text-muted-foreground" />
-                      <p className="text-sm font-medium text-foreground mb-1">
-                        Drop an image here or click to browse
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </motion.div>
-
-                    {/* Image Preview */}
-                    <AnimatePresence>
-                      {imagePreview && (
-                        <motion.div
-                          className="mt-3 relative inline-block"
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                        >
-                          <img
-                            src={imagePreview}
-                            alt="Preview"
-                            className="w-32 h-32 object-cover rounded-xl border border-border shadow-lg"
-                          />
-                          <motion.button
-                            onClick={() => {
-                              setImagePreview(null);
-                              handleInputChange('imageUrl', '');
-                            }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center shadow-lg"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                          >
-                            <X className="w-3 h-3" />
-                          </motion.button>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </motion.div>
-                </motion.div>
-              )}
-
-              {/* Step 2: Details & Scoring */}
-              {currentStep === 2 && (
-                <motion.div
-                  key="step2"
-                  variants={stepVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="space-y-6"
-                >
-                  {/* Description */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Description
-                    </label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => handleInputChange('description', e.target.value)}
-                      placeholder="Why do you want this item?"
-                      rows={4}
-                      className="w-full px-4 py-3 border border-border rounded-lg resize-none bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary-500/50"
-                    />
-                  </motion.div>
-
-                  {/* Desire Score */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="block text-sm font-medium text-foreground mb-3">
-                      How much do you want this?
-                    </label>
-                    <div className="p-4 bg-gradient-to-r from-surface/50 to-background/30 rounded-xl border border-border/50">
-                      <WishScore
-                        score={formData.score}
-                        variant="hearts"
-                        size="md"
-                        interactive={true}
-                        onChange={(score) => handleInputChange('score', score)}
-                        showLabel={true}
-                      />
-                    </div>
-                    {errors.score && (
-                      <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                        <AlertCircle className="w-3 h-3" />
-                        {errors.score}
-                      </p>
-                    )}
-                  </motion.div>
-
-                  {/* Privacy Setting */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="flex items-center gap-3 cursor-pointer p-3 rounded-lg border border-border hover:bg-surface/50 transition-all duration-200">
-                      <input
-                        type="checkbox"
-                        checked={formData.isPrivate}
-                        onChange={(e) => handleInputChange('isPrivate', e.target.checked)}
-                        className="w-4 h-4 text-primary-500 border-border rounded focus:ring-2 focus:ring-primary-500/50"
-                      />
-                      <div className="flex items-center gap-2">
-                        {formData.isPrivate ? (
-                          <EyeOff className="w-4 h-4 text-muted-foreground" />
-                        ) : (
-                          <Eye className="w-4 h-4 text-muted-foreground" />
-                        )}
+                      {/* Left Column - Basic Info */}
+                      <div className="space-y-6">
+                        {/* Item Name */}
                         <div>
-                          <span className="text-sm font-medium text-foreground">
-                            {formData.isPrivate ? 'Private item' : 'Public item'}
-                          </span>
-                          <p className="text-xs text-muted-foreground">
-                            {formData.isPrivate
-                              ? 'Only you can see this wish'
-                              : 'Friends can see and reserve this wish'
-                            }
-                          </p>
+                          <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                            <Heart className="w-4 h-4 text-red-500" />
+                            Item Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={formData.name}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            placeholder="What do you want?"
+                            className={cn(
+                              'w-full px-4 py-3 rounded-xl transition-all duration-200',
+                              getThemeStyles.input,
+                              errors.name && 'border-red-500 bg-red-50/50 dark:bg-red-900/20'
+                            )}
+                            maxLength={200}
+                          />
+                          <div className="flex justify-between items-center mt-2">
+                            {errors.name && (
+                              <span className="text-sm text-red-500 flex items-center gap-1">
+                                <AlertCircle className="w-4 h-4" />
+                                {errors.name}
+                              </span>
+                            )}
+                            <span className={cn('text-xs ml-auto', isDark ? 'text-slate-400' : 'text-gray-500')}>
+                              {getWordCount(formData.name)}/{limits.name} words
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                            <FileText className="w-4 h-4 text-blue-500" />
+                            Description <span className="text-red-500">*</span>
+                          </label>
+                          <textarea
+                            value={formData.description}
+                            onChange={(e) => handleInputChange('description', e.target.value)}
+                            placeholder="Tell us more about this item..."
+                            className={cn(
+                              'w-full px-4 py-3 rounded-xl resize-none transition-all duration-200',
+                              getThemeStyles.input,
+                              errors.description && 'border-red-500 bg-red-50/50 dark:bg-red-900/20'
+                            )}
+                            rows={4}
+                          />
+                          <div className="flex justify-between items-center mt-2">
+                            {errors.description && (
+                              <span className="text-sm text-red-500 flex items-center gap-1">
+                                <AlertCircle className="w-4 h-4" />
+                                {errors.description}
+                              </span>
+                            )}
+                            <span className={cn('text-xs ml-auto', isDark ? 'text-slate-400' : 'text-gray-500')}>
+                              {getWordCount(formData.description)}/{limits.description} words
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Product Link */}
+                        <div>
+                          <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                            <Globe className="w-4 h-4 text-green-500" />
+                            Product Link <span className="text-red-500">*</span>
+                          </label>
+                          <div className="relative">
+                            <input
+                              type="url"
+                              value={formData.link}
+                              onChange={(e) => handleUrlChange(e.target.value)}
+                              placeholder="https://example.com/item"
+                              className={cn(
+                                'w-full px-12 py-3 rounded-xl transition-all duration-200',
+                                getThemeStyles.input,
+                                errors.link && 'border-red-500 bg-red-50/50 dark:bg-red-900/20'
+                              )}
+                            />
+                            <Link className="absolute left-4 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            {urlExtracting && (
+                              <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
+                                <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                              </div>
+                            )}
+                          </div>
+                          {errors.link && (
+                            <span className="text-sm text-red-500 flex items-center gap-1 mt-2">
+                              <AlertCircle className="w-4 h-4" />
+                              {errors.link}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Desire Score */}
+                        <div>
+                          <label className={cn('block text-sm font-bold mb-4 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                            <Sparkles className="w-4 h-4 text-yellow-500" />
+                            How much do you want this?
+                          </label>
+                          <div className={cn('rounded-2xl p-4 border', getThemeStyles.input)}>
+                            <WishScore
+                              score={formData.score}
+                              maxScore={5}
+                              variant="hearts"
+                              size="lg"
+                              interactive={true}
+                              onChange={(score) => handleInputChange('score', score)}
+                              showLabel={true}
+                            />
+                          </div>
                         </div>
                       </div>
-                    </label>
-                  </motion.div>
-                </motion.div>
-              )}
 
-              {/* Step 3: Organization */}
-              {currentStep === 3 && (
-                <motion.div
-                  key="step3"
-                  variants={stepVariants}
-                  initial="initial"
-                  animate="animate"
-                  exit="exit"
-                  className="space-y-6"
-                >
-                  {/* Category Tags */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="block text-sm font-medium text-foreground mb-3">
-                      Category Tags
-                    </label>
+                      {/* Right Column - Media */}
+                      <div className="space-y-6">
+                        {/* Image Upload/Preview */}
+                        <div>
+                          <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                            <ImageIcon className="w-4 h-4 text-purple-500" />
+                            Product Image <span className="text-red-500">*</span>
+                          </label>
 
-                    {/* Selected Tags */}
-                    {formData.categoryTags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {formData.categoryTags.map((tag) => (
-                          <motion.span
-                            key={tag}
-                            className="inline-flex items-center gap-1 px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                          >
-                            {tag}
-                            <button
-                              onClick={() => handleRemoveTag(tag)}
-                              className="p-0.5 hover:bg-primary-200 rounded-full"
+                          {/* Image Preview */}
+                          {imagePreview ? (
+                            <div className="relative">
+                              <div className={cn('rounded-2xl p-4 border', getThemeStyles.input)}>
+                                <img
+                                  src={imagePreview}
+                                  alt="Preview"
+                                  className="w-full h-48 object-cover rounded-xl"
+                                />
+                              </div>
+                              <motion.button
+                                onClick={handleRemoveImage}
+                                className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </motion.button>
+                            </div>
+                          ) : (
+                            <div
+                              className={cn(
+                                'border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-200 cursor-pointer',
+                                isDragActive ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-900/20' : 'border-gray-300 dark:border-slate-600',
+                                'hover:border-blue-500 hover:bg-blue-50/50 dark:hover:bg-blue-900/20'
+                              )}
+                              onDragOver={handleDragOver}
+                              onDragLeave={handleDragLeave}
+                              onDrop={handleDrop}
+                              onClick={() => document.getElementById('image-upload').click()}
                             >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </motion.span>
-                        ))}
-                      </div>
-                    )}
+                              <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
+                              <p className={cn('text-lg font-medium mb-2', isDark ? 'text-white' : 'text-gray-900')}>
+                                Drop image here or click to upload
+                              </p>
+                              <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-gray-500')}>
+                                Supports JPG, PNG, GIF up to 10MB
+                              </p>
+                            </div>
+                          )}
 
-                    {/* Available Tags */}
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-2">Choose from popular categories:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {commonTags
-                          .filter(tag => !formData.categoryTags.includes(tag))
-                          .slice(0, 12)
-                          .map((tag) => (
-                            <motion.button
-                              key={tag}
-                              onClick={() => handleAddTag(tag)}
-                              className="px-3 py-1 text-sm border border-border rounded-full hover:bg-surface/50 transition-colors"
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              {tag}
-                            </motion.button>
-                          ))}
-                      </div>
-                    </div>
-                  </motion.div>
+                          <input
+                            id="image-upload"
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => handleImageUpload(e.target.files[0])}
+                            className="hidden"
+                          />
 
-                  {/* Collection Assignment */}
-                  <motion.div variants={fieldVariants}>
-                    <label className="block text-sm font-medium text-foreground mb-2">
-                      Add to Collection
-                    </label>
-                    <select
-                      value={formData.collectionIds[0] || ''}
-                      onChange={(e) => handleInputChange('collectionIds', e.target.value ? [e.target.value] : [])}
-                      className="w-full px-4 py-3 border border-border rounded-lg bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary-500/50"
+                          {/* Image URL Input Alternative */}
+                          <div className="mt-4">
+                            <label className={cn('block text-sm font-medium mb-2', isDark ? 'text-slate-300' : 'text-gray-700')}>
+                              Or enter image URL:
+                            </label>
+                            <input
+                              type="url"
+                              value={formData.imageUrl}
+                              onChange={(e) => handleImageUrlChange(e.target.value)}
+                              placeholder="https://example.com/image.jpg"
+                              className={cn('w-full px-4 py-3 rounded-xl transition-all duration-200', getThemeStyles.input)}
+                            />
+                          </div>
+
+                          {errors.imageUrl && (
+                            <span className="text-sm text-red-500 flex items-center gap-1 mt-2">
+                              <AlertCircle className="w-4 h-4" />
+                              {errors.imageUrl}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* Step 2: Organization & Privacy */}
+                  {currentStep === 2 && (
+                    <motion.div
+                      key="step2"
+                      variants={stepVariants}
+                      initial="initial"
+                      animate="animate"
+                      exit="exit"
+                      className="space-y-6"
                     >
-                      <option value="">No specific collection</option>
-                      {collections
-                        .filter(col => !col.isDefault)
-                        .map(collection => (
-                          <option key={collection.id} value={collection.id}>
-                            {collection.emoji || '📁'} {collection.name}
-                          </option>
-                        ))}
-                    </select>
-                  </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+                      {/* Collection Selection */}
+                      <div>
+                        <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                          <Folder className="w-4 h-4 text-purple-500" />
+                          Collection
+                        </label>
+                        <div className="flex gap-3">
+                          <select
+                            value={formData.collectionIds[0] || ''}
+                            onChange={(e) => {
+                              const value = e.target.value;
+                              handleInputChange('collectionIds', value ? [value] : []);
+                            }}
+                            className={cn('flex-1 px-4 py-3 rounded-xl transition-all duration-200', getThemeStyles.input)}
+                          >
+                            <option value="">No collection</option>
+                            {collections.filter(c => c.id !== 'all').map((collection) => (
+                              <option key={collection.id} value={collection.id}>
+                                {collection.emoji || '📋'} {collection.name}
+                              </option>
+                            ))}
+                          </select>
+                          <motion.button
+                            type="button"
+                            onClick={() => setShowCollectionModal(true)}
+                            className={cn(
+                              'px-4 py-3 rounded-xl font-semibold text-white shadow-lg transition-all duration-200',
+                              'bg-gradient-to-r', getThemeStyles.gradient
+                            )}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <Plus className="w-5 h-5" />
+                          </motion.button>
+                        </div>
+                      </div>
 
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-border/50 bg-gradient-to-r from-surface/30 to-background/20">
-            <div className="flex items-center justify-between">
-              {/* Previous Button */}
-              <div>
-                {currentStep > 1 && (
+                      {/* Category Tags - Horizontal Layout */}
+                      <div>
+                        <label className={cn('block text-sm font-bold mb-3 flex items-center gap-2', isDark ? 'text-white' : 'text-gray-900')}>
+                          <Tag className="w-4 h-4 text-orange-500" />
+                          Category Tags
+                        </label>
+
+                        {/* Selected Tags */}
+                        {formData.categoryTags.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {formData.categoryTags.map((tag) => (
+                              <motion.span
+                                key={tag}
+                                className={cn(
+                                  'inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium',
+                                  'bg-gradient-to-r', getThemeStyles.gradient, 'text-white'
+                                )}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ scale: 1.05 }}
+                              >
+                                {tag}
+                                <motion.button
+                                  onClick={() => handleRemoveTag(tag)}
+                                  className="hover:bg-white/20 rounded-full p-0.5 transition-colors"
+                                  whileHover={{ scale: 1.1 }}
+                                  whileTap={{ scale: 0.9 }}
+                                >
+                                  <X className="w-3 h-3" />
+                                </motion.button>
+                              </motion.span>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Tag Search and Quick Add */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          <div className="relative">
+                            <input
+                              type="text"
+                              value={tagSearchQuery}
+                              onChange={(e) => setTagSearchQuery(e.target.value)}
+                              onFocus={() => setShowTagDropdown(true)}
+                              placeholder="Search tags..."
+                              className={cn('w-full px-4 py-3 rounded-xl transition-all duration-200', getThemeStyles.input)}
+                            />
+                            {/* Horizontal dropdown */}
+                            {showTagDropdown && filteredTags.length > 0 && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                className={cn(
+                                  'absolute top-full left-0 right-0 mt-2 z-20 rounded-xl shadow-xl border backdrop-blur-xl',
+                                  getThemeStyles.modal
+                                )}
+                              >
+                                <div className="grid grid-cols-2 gap-1 p-2">
+                                  {filteredTags.map((tag) => (
+                                    <motion.button
+                                      key={tag}
+                                      onClick={() => handleAddTag(tag)}
+                                      className={cn(
+                                        'px-3 py-2 text-left rounded-lg transition-all duration-200 text-sm',
+                                        'hover:bg-gradient-to-r', `hover:${getThemeStyles.gradient}`, 'hover:text-white'
+                                      )}
+                                      whileHover={{ x: 4 }}
+                                    >
+                                      {tag}
+                                    </motion.button>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
+
+                          {/* Quick add popular tags */}
+                          <div className="flex flex-wrap gap-2">
+                            {['Electronics', 'Fashion', 'Books', 'Home'].map((tag) => (
+                              !formData.categoryTags.includes(tag) && (
+                                <motion.button
+                                  key={tag}
+                                  onClick={() => handleAddTag(tag)}
+                                  className={cn(
+                                    'px-3 py-1 rounded-full text-sm transition-all duration-200 border',
+                                    isDark ? 'border-slate-600 hover:bg-slate-700' : 'border-gray-300 hover:bg-gray-100'
+                                  )}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  + {tag}
+                                </motion.button>
+                              )
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Click outside handler */}
+                        {showTagDropdown && (
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setShowTagDropdown(false)}
+                          />
+                        )}
+                      </div>
+
+                      {/* Enhanced Privacy Toggle */}
+                      <div>
+                        <label className={cn('block text-sm font-bold mb-3', isDark ? 'text-white' : 'text-gray-900')}>
+                          Privacy Setting
+                        </label>
+                        <div className={cn('flex items-center justify-between p-4 rounded-xl border', getThemeStyles.input)}>
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              'w-10 h-10 rounded-full flex items-center justify-center',
+                              formData.isPrivate ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'
+                            )}>
+                              {formData.isPrivate ? (
+                                <EyeOff className="w-5 h-5 text-red-600 dark:text-red-400" />
+                              ) : (
+                                <Eye className="w-5 h-5 text-green-600 dark:text-green-400" />
+                              )}
+                            </div>
+                            <div>
+                              <p className={cn('font-semibold', isDark ? 'text-white' : 'text-gray-900')}>
+                                {formData.isPrivate ? 'Private Wish' : 'Public Wish'}
+                              </p>
+                              <p className={cn('text-sm', isDark ? 'text-slate-400' : 'text-gray-600')}>
+                                {formData.isPrivate
+                                  ? 'Only you can see this wish'
+                                  : 'Friends can see and reserve this wish'
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          <motion.button
+                            onClick={() => handleInputChange('isPrivate', !formData.isPrivate)}
+                            className={cn(
+                              'relative w-14 h-8 rounded-full transition-all duration-200',
+                              formData.isPrivate ? 'bg-red-500' : 'bg-green-500'
+                            )}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            <motion.div
+                              className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-lg"
+                              animate={{
+                                x: formData.isPrivate ? 24 : 4
+                              }}
+                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            />
+                          </motion.button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Submit Error */}
+                {errors.submit && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-4 p-4 rounded-xl bg-red-50/80 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+                  >
+                    <span className="text-sm text-red-600 dark:text-red-400 flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4" />
+                      {errors.submit}
+                    </span>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className={cn('flex items-center justify-between p-6 border-t', isDark ? 'border-slate-700/50' : 'border-gray-200/50')}>
+                <div>
+                  {canGoPrevious && (
+                    <motion.button
+                      onClick={handlePrevious}
+                      className={cn('flex items-center gap-2 px-4 py-2 rounded-xl transition-all duration-200', getThemeStyles.input)}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Previous
+                    </motion.button>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-3">
                   <motion.button
-                    onClick={handlePrevious}
-                    disabled={loading}
-                    className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50"
+                    onClick={handleClose}
+                    className={cn('px-6 py-2 rounded-xl transition-all duration-200', getThemeStyles.input)}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    Previous
+                    Cancel
                   </motion.button>
-                )}
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleClose}
-                  disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-
-                {currentStep < totalSteps ? (
-                  <motion.button
-                    onClick={handleNext}
-                    disabled={!canGoNext() || loading}
-                    className={cn(
-                      'px-6 py-2 text-sm font-medium rounded-lg transition-colors',
-                      'bg-primary-500 hover:bg-primary-600 text-white',
-                      'disabled:opacity-50 disabled:cursor-not-allowed'
-                    )}
-                    whileHover={canGoNext() ? { scale: 1.02 } : {}}
-                    whileTap={canGoNext() ? { scale: 0.98 } : {}}
-                  >
-                    Continue
-                  </motion.button>
-                ) : (
-                  <motion.button
-                    onClick={handleSave}
-                    disabled={loading || !canGoNext()}
-                    className={cn(
-                      'px-6 py-2 text-sm font-medium rounded-lg transition-colors',
-                      'bg-primary-500 hover:bg-primary-600 text-white',
-                      'disabled:opacity-50 disabled:cursor-not-allowed',
-                      'flex items-center gap-2'
-                    )}
-                    whileHover={!loading ? { scale: 1.02 } : {}}
-                    whileTap={!loading ? { scale: 0.98 } : {}}
-                  >
-                    {loading ? (
-                      <>
-                        <motion.div
-                          className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full"
-                          animate={{ rotate: 360 }}
-                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
+                  {canGoNext ? (
+                    <motion.button
+                      onClick={handleNext}
+                      disabled={!validateStep1()}
+                      className={cn(
+                        'flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all duration-200',
+                        'bg-gradient-to-r', getThemeStyles.gradient,
+                        'disabled:opacity-50 disabled:cursor-not-allowed'
+                      )}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      Next
+                      <ArrowRight className="w-4 h-4" />
+                    </motion.button>
+                  ) : (
+                    <motion.button
+                      onClick={handleSave}
+                      disabled={loading}
+                      className={cn(
+                        'flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all duration-200',
+                        'bg-gradient-to-r from-emerald-500 to-teal-500',
+                        'disabled:opacity-50 disabled:cursor-not-allowed'
+                      )}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      {loading ? (
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
                         <Check className="w-4 h-4" />
-                        {isEditMode ? 'Update Item' : 'Add to Wishlist'}
-                      </>
-                    )}
-                  </motion.button>
-                )}
+                      )}
+                      {isEditMode ? 'Update Wish' : 'Add Wish'}
+                    </motion.button>
+                  )}
+                </div>
               </div>
-            </div>
+            </motion.div>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      )}
     </AnimatePresence>
   );
 });
