@@ -197,7 +197,19 @@ const WishModal = React.forwardRef(({
     setErrors(currentErrors => validateField(field, value, currentErrors));
   }, [validateField]);
 
-  // Validate step 1 required fields
+  // Create a pure validation function that doesn't set state
+  const checkStep1Validity = useCallback(() => {
+    const step1Fields = ['name', 'description', 'link', 'imageUrl'];
+    let tempErrors = {};
+
+    step1Fields.forEach(field => {
+      tempErrors = validateField(field, formData[field], tempErrors);
+    });
+
+    return Object.keys(tempErrors).length === 0;
+  }, [formData, validateField]);
+
+  // Keep a separate function that updates state (only call this when needed)
   const validateStep1 = useCallback(() => {
     const step1Fields = ['name', 'description', 'link', 'imageUrl'];
     let tempErrors = {};
@@ -1224,7 +1236,7 @@ const WishModal = React.forwardRef(({
                   {canGoNext ? (
                     <motion.button
                       onClick={handleNext}
-                      disabled={!validateStep1()}
+                      disabled={!checkStep1Validity()}
                       className={cn(
                         'flex items-center gap-2 px-6 py-2 rounded-xl font-semibold text-white shadow-lg transition-all duration-200',
                         'bg-gradient-to-r', getThemeStyles.gradient,
