@@ -18,9 +18,9 @@ import {
   createWishlistItem,
   updateWishlistItem,
   createCollection
-} from '../../lib/wishlistService';
+} from '../../services/wishlist';
 
-import { getCurrentUser } from '../../lib/authService';
+import { getCurrentUser } from '../../services/auth';
 
 // Import performance utilities
 import {

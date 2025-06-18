@@ -16,7 +16,7 @@
 // - Professional error handling with detailed messages
 // ================================================================
 
-import { supabase } from './supabase.js';
+import { supabase } from '../lib/supabase.js';
 
 // ================================================================
 // TYPE DOCUMENTATION (JavaScript Object Shapes)

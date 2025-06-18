@@ -11,8 +11,8 @@ import {
   addItemToCollections,
   removeItemFromCollections,
   getDashboardData
-} from '../../lib/wishlistService';
-import { getCurrentUser, isAuthenticated } from '../../lib/authService';
+} from '../../services/wishlist';
+import { getCurrentUser, isAuthenticated } from '../../services/auth';
 
 const WishlistDemo = () => {
   // === STATE MANAGEMENT ===
