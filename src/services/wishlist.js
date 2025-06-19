@@ -14,8 +14,8 @@
 // - Professional documentation with examples
 // ================================================================
 
-import { supabase } from './supabase.js';
-import { getCurrentUser } from './authService.js';
+import { supabase } from '../lib/supabase.js';
+import { getCurrentUser } from './auth.js';
 
 // ================================================================
 // TYPE DOCUMENTATION (JavaScript Object Shapes)

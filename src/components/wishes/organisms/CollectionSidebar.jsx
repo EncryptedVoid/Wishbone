@@ -12,7 +12,7 @@ import { useTheme } from '../../../contexts/ThemeContext';
 
 // Import molecules
 import CollectionItem from '../molecules/CollectionItem';
-import CollectionModal from '../molecules/CollectionModal';
+import CollectionModal from './CollectionModal';
 
 /**
  * CollectionSidebar Component - Modern glassmorphic redesign
