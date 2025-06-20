@@ -3,7 +3,6 @@ import { useIsMobile } from '../../hooks/useIsMobile';
 import WishlistDesktop from './Wishlist.desktop';
 import WishlistMobile from './Wishlist.mobile';
 import LoadingState from '../../components/ui/LoadingState';
-import TestWishlist from './TestWishlist'
 
 /**
  * Main Wishlist Component - Responsive wishlist that switches between desktop and mobile layouts

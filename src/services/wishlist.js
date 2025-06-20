@@ -680,7 +680,8 @@ export async function createCollection(collectionData) {
       description: cleanStringField(collectionData.description),
       emoji: cleanStringField(collectionData.emoji) || '📋',
       color: cleanStringField(collectionData.color) || 'blue',
-      item_count: 0, // Start with zero items
+      is_private: Boolean(collectionData.isPrivate), // ← Add this line
+      item_count: 0,
       user_id: user.id
     };
 

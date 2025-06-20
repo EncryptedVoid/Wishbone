@@ -15,8 +15,8 @@ import CollectionItem from '../molecules/CollectionItem';
 import CollectionModal from './CollectionModal';
 
 /**
- * CollectionSidebar Component - Modern glassmorphic redesign
- * Beautiful, clean interface with enhanced visual hierarchy
+ * CollectionSidebar Component - FIXED: Proper z-index stacking for dropdowns
+ * The sidebar container no longer creates stacking contexts that limit dropdown z-index
  */
 
 // Mobile wrapper component - defined outside main component
@@ -60,6 +60,7 @@ const CollectionSidebar = React.forwardRef(({
   onAddCollection,
   onEditCollection,
   onDeleteCollection,
+  onToggleCollectionPrivacy,
   isOpen = true,
   onClose,
   userRole = 'owner',
@@ -208,7 +209,6 @@ const CollectionSidebar = React.forwardRef(({
       handleCloseModal();
     } catch (error) {
       console.error('Error saving collection:', error);
-      // Error handling could be improved with toast notifications
     } finally {
       setCollectionModalState(prev => ({ ...prev, loading: false }));
     }
@@ -231,12 +231,13 @@ const CollectionSidebar = React.forwardRef(({
     <motion.aside
       ref={ref}
       className={cn(
-        // Modern glassmorphic container - REMOVE HEIGHT RESTRICTIONS
-        'flex flex-col relative overflow-hidden',
+        // FIXED: Remove z-index classes that create stacking contexts
+        // Modern glassmorphic container without z-index restrictions
+        'flex flex-col overflow-hidden',
         'bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl',
         'border-r border-white/20 dark:border-gray-700/30',
         'shadow-2xl shadow-black/10 dark:shadow-black/30',
-        // Desktop - relative positioning within container - MUCH TALLER
+        // Desktop - relative positioning within container
         'w-80 flex-shrink-0',
         // Mobile - still use positioning for overlay behavior
         'md:relative md:translate-x-0',
@@ -250,9 +251,9 @@ const CollectionSidebar = React.forwardRef(({
       {/* Background gradient overlay - reactive to global theme color */}
       <div className={`absolute inset-0 bg-gradient-to-br ${currentSidebarTheme.headerGradient}`} />
 
-      {/* Header with modern styling */}
+      {/* FIXED: Header without z-index restrictions */}
       <motion.div
-        className="relative z-10 p-6 border-b border-white/30 dark:border-gray-700/40"
+        className="relative p-6 border-b border-white/30 dark:border-gray-700/40"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1, duration: 0.5 }}
@@ -315,9 +316,9 @@ const CollectionSidebar = React.forwardRef(({
         </div>
       </motion.div>
 
-      {/* Collections List with enhanced styling */}
+      {/* FIXED: Collections List without z-index restrictions */}
       <motion.div
-        className="relative z-10 flex-1 overflow-y-auto p-5 space-y-3"
+        className="flex-1 overflow-y-auto p-5 space-y-3"
         variants={containerVariants}
         initial="initial"
         animate="animate"
@@ -408,6 +409,7 @@ const CollectionSidebar = React.forwardRef(({
                     onClick={handleCollectionSelect}
                     onEdit={userRole === 'owner' ? handleOpenEditModal : undefined}
                     onDelete={userRole === 'owner' ? onDeleteCollection : undefined}
+                    onTogglePrivacy={userRole === 'owner' ? onToggleCollectionPrivacy : undefined}
                     variant="prominent"
                   />
                 </motion.div>
