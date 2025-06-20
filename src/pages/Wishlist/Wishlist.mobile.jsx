@@ -11,13 +11,15 @@ import WishModal from '../../components/wishes/organisms/WishModal';
 // Import UI components
 import LoadingState from '../../components/ui/LoadingState';
 
-// Import services
+// Add after getCurrentUser import
 import {
   getDashboardData,
   deleteWishlistItem,
   createWishlistItem,
   updateWishlistItem,
-  createCollection
+  createCollection,
+  updateCollection,
+  deleteCollection
 } from '../../services/wishlist';
 
 import { getCurrentUser } from '../../services/auth';
@@ -198,6 +200,61 @@ const UltraFastWishlistMobile = React.memo(({ className, ...props }) => {
   // ===============================
   // EVENT HANDLERS
   // ===============================
+
+  const handleAddCollection = async (collectionData) => {
+    try {
+      console.log('🚀 Creating collection:', collectionData);
+
+      // Use your existing service function
+      const newCollection = await createCollection(collectionData);
+
+      console.log('✅ Collection created:', newCollection);
+
+      // Update local collections state immediately for better UX
+      setCollections(prev => {
+        const allItemsCollection = prev.find(c => c.id === 'all');
+        const otherCollections = prev.filter(c => c.id !== 'all');
+        
+        return allItemsCollection 
+          ? [allItemsCollection, newCollection, ...otherCollections]
+          : [newCollection, ...otherCollections];
+      });
+
+      // Clear cache to ensure fresh data
+      setDataCache(new Map());
+
+      // Refresh data in background
+      setTimeout(() => loadData(true), 500);
+
+      return newCollection;
+    } catch (error) {
+      console.error('❌ Failed to create collection:', error);
+      throw error;
+    }
+    };
+
+  // Add this function in Wishlist.mobile.jsx after handleDeleteCollection
+  const handleToggleCollectionPrivacy = useCallback(async (collectionId, isPrivate) => {
+    try {
+      setLoading(true);
+      const updatedCollection = await updateCollection(collectionId, { isPrivate });
+      
+      // Update local collections state immediately
+      setCollections(prev => prev.map(col => 
+        col.id === collectionId ? { ...col, is_private: isPrivate } : col
+      ));
+
+      console.log('✅ Collection privacy updated:', updatedCollection);
+      return updatedCollection;
+    } catch (err) {
+      console.error('❌ Failed to toggle collection privacy:', err);
+      setError(err.message || 'Failed to update collection privacy');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   const handleCollectionChange = useCallback((collectionId) => {
     setActiveCollection(collectionId);
     setSelectedItems([]);
@@ -394,11 +451,15 @@ const UltraFastWishlistMobile = React.memo(({ className, ...props }) => {
         className
       )} {...props}>
         {/* Collection Sidebar */}
+        // Update this in Wishlist.mobile.jsx
         <CollectionSidebar
           collections={collections}
           activeCollection={activeCollection}
           onCollectionChange={handleCollectionChange}
-          onAddCollection={() => {}} // TODO: implement
+          onAddCollection={handleAddCollection}
+          onEditCollection={handleEditCollection}
+          onDeleteCollection={handleDeleteCollection}
+          onToggleCollectionPrivacy={handleToggleCollectionPrivacy} // Add this line
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
           userRole="owner"

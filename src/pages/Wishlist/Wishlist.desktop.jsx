@@ -8,6 +8,17 @@ import WishlistToolbar from '../../components/wishes/organisms/WishlistToolbar';
 import WishGrid from '../../components/wishes/organisms/WishGrid';
 import WishModal from '../../components/wishes/organisms/WishModal';
 
+// Add after getCurrentUser import
+import {
+  getDashboardData,
+  deleteWishlistItem,
+  createWishlistItem,
+  updateWishlistItem,
+  createCollection,
+  updateCollection,
+  deleteCollection
+} from '../../services/wishlist';
+
 // Import UI components
 import LoadingState from '../../components/ui/LoadingState';
 import {
@@ -25,15 +36,6 @@ import {
   Type,
   FileText
 } from 'lucide-react';
-
-// Import services
-import {
-  getDashboardData,
-  deleteWishlistItem,
-  createWishlistItem,
-  updateWishlistItem,
-  createCollection
-} from '../../services/wishlist';
 
 import { getCurrentUser } from '../../services/auth';
 
@@ -376,22 +378,82 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
     setSelectedItems([]);
   }, []);
 
-  const handleAddCollection = useCallback(async () => {
-    // Implementation for adding collection
-    console.log('Add collection clicked');
-  }, []);
-
-  // Delete item handler
-  const handleDeleteItem = useCallback(async (itemId) => {
+  const handleAddCollection = async (collectionData) => {
     try {
-      await deleteWishlistItem(itemId);
-      setWishlistItems(prev => prev.filter(item => item.id !== itemId));
-      setDataCache(new Map()); // Clear cache
-    } catch (err) {
-      console.error('Error deleting item:', err);
-      setError(`Failed to delete item: ${err.message}`);
+      console.log('🚀 Creating collection:', collectionData);
+
+      // Use your existing service function
+      const newCollection = await createCollection(collectionData);
+
+      console.log('✅ Collection created:', newCollection);
+
+      // Update local collections state immediately for better UX
+      setCollections(prev => {
+        const allItemsCollection = prev.find(c => c.id === 'all');
+        const otherCollections = prev.filter(c => c.id !== 'all');
+        
+        return allItemsCollection 
+          ? [allItemsCollection, newCollection, ...otherCollections]
+          : [newCollection, ...otherCollections];
+      });
+
+      // Clear cache to ensure fresh data
+      setDataCache(new Map());
+
+      // Refresh data in background
+      setTimeout(() => loadData(true), 500);
+
+      return newCollection;
+    } catch (error) {
+      console.error('❌ Failed to create collection:', error);
+      throw error;
     }
-  }, []);
+  };
+
+  const handleToggleCollectionPrivacy = async (collectionId, isPrivate) => {
+    try {
+      const updatedCollection = await updateCollection(collectionId, { isPrivate });
+      console.log('✅ Collection privacy updated:', updatedCollection);
+
+      // Update local collections state immediately
+      setCollections(prev => prev.map(col =>
+        col.id === collectionId ? { ...col, is_private: isPrivate } : col
+      ));
+
+      // Clear cache and refresh
+      setDataCache(new Map());
+      setTimeout(() => loadData(true), 500);
+
+      return updatedCollection;
+    } catch (error) {
+      console.error('❌ Failed to toggle collection privacy:', error);
+      setError(`Failed to update collection privacy: ${error.message}`);
+      throw error;
+    }
+  };
+
+  const handleEditCollection = async (collectionId, updates) => {
+    try {
+      const updatedCollection = await updateCollection(collectionId, updates);
+      console.log('✅ Collection updated:', updatedCollection);
+      // Refresh collections
+      return updatedCollection;
+    } catch (error) {
+      console.error('❌ Failed to update collection:', error);
+      throw error;
+    }
+  };
+
+  const handleDeleteCollection = async (collection) => {
+    try {
+      await deleteCollection(collection.id);
+      console.log('✅ Collection deleted');
+      // Refresh collections
+    } catch (error) {
+      console.error('❌ Failed to delete collection:', error);
+      throw error;
+    }
+  };
 
   // Dibs change handler
   const handleDibsChange = useCallback(async (itemId, dibbedBy) => {
@@ -427,12 +489,15 @@ const UltraFastWishlistDesktop = React.memo(({ className, ...props }) => {
       'flex overflow-hidden',
       className
     )}>
-      {/* Enhanced Sidebar */}
+
       <CollectionSidebar
         collections={collections}
         activeCollection={activeCollection}
         onCollectionChange={handleCollectionChange}
         onAddCollection={handleAddCollection}
+        onEditCollection={handleEditCollection}
+        onDeleteCollection={handleDeleteCollection}
+        onToggleCollectionPrivacy={handleToggleCollectionPrivacy} // Add this line
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         userRole="owner"
