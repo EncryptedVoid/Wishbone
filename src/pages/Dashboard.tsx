@@ -20,8 +20,20 @@ const Dashboard: React.FC = () => {
           </h1>
           <div className="space-x-4">
             <Link
-              to="/profile"
+              to="/wishlist"
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            >
+              Wishlist
+            </Link>
+            <Link
+              to="/collections"
+              className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600"
+            >
+              Collections
+            </Link>
+            <Link
+              to="/profile"
+              className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
             >
               Profile
             </Link>
@@ -30,20 +42,6 @@ const Dashboard: React.FC = () => {
               className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
             >
               Sign Out
-            </button>
-          </div>
-          <div className="space-x-4">
-            <Link
-              to="/wishlist"
-              className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-            >
-              wishlist
-            </Link>
-            <button
-              onClick={signOut}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-            >
-              My Wishlist
             </button>
           </div>
         </div>
@@ -88,17 +86,37 @@ const Dashboard: React.FC = () => {
             <h2 className="text-xl font-bold mb-4">Quick Actions</h2>
             <div className="space-y-2">
               <Link
-                to="/profile"
+                to="/wishlist"
                 className="block text-blue-600 hover:text-blue-800"
               >
-                Edit Profile
+                📝 Manage Wishlist
               </Link>
               <Link
-                to="/settings"
-                className="block text-blue-600 hover:text-blue-800"
+                to="/collections"
+                className="block text-purple-600 hover:text-purple-800"
               >
-                Settings
+                📂 Manage Collections
               </Link>
+              <Link
+                to="/profile"
+                className="block text-green-600 hover:text-green-800"
+              >
+                ⚙️ Edit Profile
+              </Link>
+            </div>
+          </div>
+
+          <div
+            className="p-6 border rounded-lg"
+            style={{
+              backgroundColor: profile?.dark_mode ? '#374151' : 'white',
+            }}
+          >
+            <h2 className="text-xl font-bold mb-4">Getting Started</h2>
+            <div className="space-y-2 text-sm">
+              <p>1. Create collections to organize your wishes</p>
+              <p>2. Add items to your wishlist</p>
+              <p>3. Organize wishes into collections</p>
             </div>
           </div>
         </div>

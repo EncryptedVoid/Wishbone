@@ -11,6 +11,7 @@ import Profile from './components/Profile'
 import PrivateRoute from './components/PrivateRoute'
 import Home from './pages/Home'
 import WishlistDashboard from './pages/WishlistDashboard'
+import CollectionsDashboard from './pages/CollectionsDashboard'
 
 function App() {
   return (
@@ -36,6 +37,14 @@ function App() {
               element={
                 <PrivateRoute>
                   <WishlistDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/collections"
+              element={
+                <PrivateRoute>
+                  <CollectionsDashboard />
                 </PrivateRoute>
               }
             />
