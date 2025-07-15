@@ -6,12 +6,11 @@ import {
 } from 'react-router-dom'
 import { AuthProvider } from './contexts/AuthContext'
 import AuthPage from './pages/Auth'
-import Dashboard from './pages/Dashboard'
+import Dashboard from './pages/UserDashboard'
 import Profile from './components/Profile'
 import PrivateRoute from './components/PrivateRoute'
 import Home from './pages/Home'
 import WishlistDashboard from './pages/WishlistDashboard'
-import CollectionsDashboard from './pages/CollectionsDashboard'
 
 function App() {
   return (
@@ -37,14 +36,6 @@ function App() {
               element={
                 <PrivateRoute>
                   <WishlistDashboard />
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/collections"
-              element={
-                <PrivateRoute>
-                  <CollectionsDashboard />
                 </PrivateRoute>
               }
             />
