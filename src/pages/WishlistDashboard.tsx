@@ -114,7 +114,7 @@ const WishlistDashboard = () => {
       console.log('Fetching baskets for user:', user.id)
 
       const { data, error } = await supabase
-        .from('collections')
+        .from('baskets')
         .select('id, name, description, color, user_id, created_at')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
@@ -432,7 +432,7 @@ const WishlistDashboard = () => {
 
         // Delete the basket
         const { error: basketError } = await supabase
-          .from('collections')
+          .from('baskets')
           .delete()
           .eq('id', basket.id)
           .eq('user_id', user?.id)

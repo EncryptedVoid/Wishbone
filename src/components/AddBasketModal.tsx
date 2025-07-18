@@ -112,7 +112,7 @@ const AddBasketModal: React.FC<AddBasketModalProps> = ({
       if (editingBasket) {
         // Update existing basket
         const { error: updateError } = await supabase
-          .from('collections')
+          .from('baskets')
           .update(basketData)
           .eq('id', editingBasket.id)
           .eq('user_id', user.id)
@@ -121,7 +121,7 @@ const AddBasketModal: React.FC<AddBasketModalProps> = ({
       } else {
         // Create new basket
         const { error: insertError } = await supabase
-          .from('collections')
+          .from('baskets')
           .insert([basketData])
 
         if (insertError) throw insertError
